@@ -1,0 +1,72 @@
+{
+  "smol135-q4": {
+    "repo": "bartowski/SmolLM2-135M-Instruct-GGUF",
+    "revision": "09816acd5d99df7be770d85ea30822623dab342c",
+    "file": "SmolLM2-135M-Instruct-Q4_K_M.gguf",
+    "sha256": "2e8040ceae7815abe0dcb3540b9995eaa1fa0d2ca9e797d0a635ae4433c68c2d",
+    "bytes": 105454432
+  },
+  "smol135-q8": {
+    "repo": "bartowski/SmolLM2-135M-Instruct-GGUF",
+    "revision": "09816acd5d99df7be770d85ea30822623dab342c",
+    "file": "SmolLM2-135M-Instruct-Q8_0.gguf",
+    "sha256": "5a1395716f7913741cc51d98581b9b1228d80987a9f7d3664106742eb06bba83",
+    "bytes": 144811360
+  },
+  "smol360-q4": {
+    "repo": "bartowski/SmolLM2-360M-Instruct-GGUF",
+    "revision": "7be6f65f1db715fe5dc5a4634c0d459b4eed42ec",
+    "file": "SmolLM2-360M-Instruct-Q4_K_M.gguf",
+    "sha256": "2fa3f013dcdd7b99f9b237717fa0b12d75bbb89984cc1274be1471a465bac9c2",
+    "bytes": 270590880
+  },
+  "smol360-q8": {
+    "repo": "bartowski/SmolLM2-360M-Instruct-GGUF",
+    "revision": "7be6f65f1db715fe5dc5a4634c0d459b4eed42ec",
+    "file": "SmolLM2-360M-Instruct-Q8_0.gguf",
+    "sha256": "c004ac34cce45e03e4452bca472535bc371fcb0d07ae560bba2c57ce4a284b7b",
+    "bytes": 386405280
+  },
+  "qwen05-q4": {
+    "repo": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+    "revision": "9217f5db79a29953eb74d5343926648285ec7e67",
+    "file": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+    "sha256": "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db",
+    "bytes": 491400032
+  },
+  "qwen05-q8": {
+    "repo": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+    "revision": "9217f5db79a29953eb74d5343926648285ec7e67",
+    "file": "qwen2.5-0.5b-instruct-q8_0.gguf",
+    "sha256": "ca59ca7f13d0e15a8cfa77bd17e65d24f6844b554a7b6c12e07a5f89ff76844e",
+    "bytes": 675710816
+  },
+  "whisper-tiny-en": {
+    "repo": "ggerganov/whisper.cpp",
+    "revision": "5359861c739e955e79d9a303bcbc70fb988958b1",
+    "file": "ggml-tiny.en.bin",
+    "sha256": "921e4cf8686fdd993dcd081a5da5b6c365bfde1162e72b08d75ac75289920b1f",
+    "bytes": 77704715
+  },
+  "stories110m": {
+    "repo": "karpathy/tinyllamas",
+    "revision": "0bd21da7698eaf29a0d7de3992de8a46ef624add",
+    "file": "stories110M.bin",
+    "sha256": "515267168726a1ed1317a64a408492e6af3b67c1f71c5bd98c01d9d721803a24",
+    "bytes": 438381596
+  },
+  "stories15m": {
+    "repo": "karpathy/tinyllamas",
+    "revision": "0bd21da7698eaf29a0d7de3992de8a46ef624add",
+    "file": "stories15M.bin",
+    "sha256": "cd590644d963867a2b6e5a1107f51fad663c41d79c149fbecbbb1f95fa81f49a",
+    "bytes": 60816028
+  },
+  "stories42m": {
+    "repo": "karpathy/tinyllamas",
+    "revision": "0bd21da7698eaf29a0d7de3992de8a46ef624add",
+    "file": "stories42M.bin",
+    "sha256": "9f65a1000e17d0bc167dd6332e0ce5119a0222a3d920cead5bce413bfab2ee7b",
+    "bytes": 167020572
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "model": "smol135-q4",
+  "server_url": "http://127.0.0.1:8080",
+  "context": 1024,
+  "threads": 4,
+  "batch": 64,
+  "max_tokens": 128,
+  "temperature": 0.3,
+  "top_p": 0.9,
+  "top_k": 40,
+  "seed": 42,
+  "timeout_seconds": 600,
+  "whisper_model": "whisper-tiny-en",
+  "audio_device": "default",
+  "record_seconds": 5,
+  "tts_voice": "en",
+  "tts_words_per_minute": 155
+}

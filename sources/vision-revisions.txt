@@ -1,0 +1,10 @@
+jetson-inference 45da40a8f3c180191b269f57f736caaa025b8a69
+ 6fa5f5d36c9be4bdf314838d840a82dd1f2960d3 c/plugins/pose (heads/master)
+ bc8d0264ef25aa0d1d25a54e4658f491d2fa130f docker/containers (bc8d026)
+ 3e9cf8c4003311009539a6c101d156c919fe2250 python/training/classification (heads/master)
+ 9046f5ea2835202786dbb4e3f42d89aa958200a3 python/training/detection (heads/master)
+ 6accaa88845ec135a7d6fe25e9a26afd4698639d python/training/detection/ssd (heads/master)
+ 6ae33ba3426665b8bde8923c0434d207ea4331e0 python/training/segmentation (6ae33ba)
+ 9b5a668ba2cb24708d35eb13f734f343be223bd0 ros (9b5a668)
+ 44d4de4a27aeea9dfc23d084b88e498c50a3d199 tools/camera-capture (heads/master)
+ 6d5471c97dad443776d2339569a4d1145f034a9e utils (6d5471c)

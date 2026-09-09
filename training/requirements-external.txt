@@ -1,0 +1,10 @@
+# Separate modern GPU machine only. Never install these on JetPack 4.
+# Python 3.10 or 3.11. Install a CUDA-enabled torch 2.6.0 build separately.
+transformers==4.51.3
+peft==0.15.2
+accelerate==1.6.0
+bitsandbytes==0.45.5
+numpy==1.26.4
+sentencepiece==0.2.0
+protobuf==4.25.6
+safetensors==0.5.3

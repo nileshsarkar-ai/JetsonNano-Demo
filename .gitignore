@@ -1,0 +1,12 @@
+.vendor/
+.tools/
+models/
+runs/
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+.env
+.env.*
+sources/*.tar.gz
+*.part
