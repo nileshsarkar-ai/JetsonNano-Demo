@@ -48,3 +48,10 @@ python3 -m unittest discover -s tests -v
 ```
 
 The board scripts and regression suite retain Python 3.6 syntax and standard-library APIs. External GPU training retains its separate Python 3.10/3.11 environment.
+
+### One-command launcher and walkthrough
+
+- `bash scripts/run_demo.sh` runs core setup, checks for an occupied server port, waits up to ten minutes for server readiness, and cleans up its server when chat exits. Camera and training remain separate optional paths.
+- The regression suite now passes nine tests, including stopping on board-check failure and preserving chat failure status while terminating the launched server. These use test doubles; no Nano system installation was performed locally.
+- Embedded Python snippets also pass Python 3.6 grammar checks.
+- The video is a generated terminal-command walkthrough, with no desktop capture and no simulated Nano success output.

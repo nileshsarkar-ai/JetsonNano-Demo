@@ -6,6 +6,18 @@ This implements a working subset of the 72-topic catalogue: local language model
 
 **Validation boundary:** the pinned runtimes and real small models were exercised on the development Mac (ARM64 CPU). This is not a claim of testing on a physical Nano. See [docs/VALIDATION.md](docs/VALIDATION.md) for actual checks and remaining board checks.
 
+## One-command setup and chat
+
+On the original Nano with JetPack 4 / Ubuntu 18.04, clone this repository, enter it, and run:
+
+```bash
+bash scripts/run_demo.sh
+```
+
+This checks the board, installs system packages (sudo may ask for your password), builds CPU runtimes, downloads the three starter models, starts the local server, waits for readiness, and opens chat. Type `/quit` to exit chat and stop that server. Server logs are saved in `runs/`. To reduce build memory use, run `JOBS=1 bash scripts/run_demo.sh`. Reruns reuse verified models and existing builds; package checks still need Internet access. Camera and training remain optional separate labs.
+
+[Watch the setup command walkthrough](docs/media/jetson-nano-setup.mp4) · [Copy the step-by-step commands](docs/SETUP-WALKTHROUGH.md). The video shows instructions, not recorded Nano execution.
+
 ## 1. Copy the code to the Nano
 
 Clone the project **on the Nano**, or open your existing local project folder. For a fresh clone:
