@@ -41,9 +41,13 @@ def download(url, dest, expected_hash, size=0):
 def main():
     manifest = json.loads((ROOT / 'models.json').read_text())
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('models', nargs='*', choices=sorted(manifest))
+    parser.add_argument('models', nargs='*', metavar='MODEL')
     parser.add_argument('--list', action='store_true')
     args = parser.parse_args()
+    unknown = sorted(set(args.models) - set(manifest))
+    if unknown:
+        parser.error('Unknown models: {}. Choose from: {}'.format(
+            ', '.join(unknown), ', '.join(sorted(manifest))))
     if args.list:
         for key, item in sorted(manifest.items()):
             print('{:<18} {:7.1f} MiB  {}'.format(key, item['bytes'] / 1024 ** 2, item['file']))

@@ -12,12 +12,14 @@ def main():
     parser.add_argument('--max-tokens', type=int, default=CONFIG['max_tokens'])
     parser.add_argument('--seed', type=int, default=CONFIG['seed'])
     args = parser.parse_args()
+    if args.prompt is not None and not args.prompt.strip():
+        parser.error('--prompt must not be empty')
     messages = [{'role': 'system', 'content': args.system}]
     while True:
         question = args.prompt if args.prompt is not None else input('You (/quit, /reset): ')
-        if question == '/quit':
+        if args.prompt is None and question == '/quit':
             break
-        if question == '/reset':
+        if args.prompt is None and question == '/reset':
             messages = messages[:1]
             continue
         if not question.strip():

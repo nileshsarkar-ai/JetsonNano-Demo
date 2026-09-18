@@ -36,9 +36,12 @@ def main():
     overlay = None
     frame, last_speech, speaker = 0, -5.0, None
     try:
-        while source.IsStreaming() and output.IsStreaming():
+        # Capture/Render open the streams lazily in jetson-utils.
+        while True:
             img = source.Capture()
             if img is None:
+                if not source.IsStreaming() or not output.IsStreaming():
+                    break
                 continue
             frame += 1
             record = {'frame': frame, 'mode': a.mode}
@@ -77,6 +80,8 @@ def main():
                 last_speech = time.monotonic()
             output.Render(img)
             output.SetStatus('{} | {:.1f} network FPS'.format(name, net.GetNetworkFPS()))
+            if not source.IsStreaming() or not output.IsStreaming():
+                break
             if a.frames and frame >= a.frames:
                 break
     finally:

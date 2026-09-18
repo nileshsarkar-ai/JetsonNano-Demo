@@ -8,19 +8,7 @@ command -v gcc-8 >/dev/null
 command -v g++-8 >/dev/null
 mkdir -p "$PROJECT_ROOT/.vendor" "$PROJECT_ROOT/.tools"
 
-checkout() {
-  local name="$1" url="$2" revision="$3"
-  local dest="$PROJECT_ROOT/.vendor/$name"
-  if [[ -e "$dest" ]]; then
-    [[ "$(git -C "$dest" rev-parse HEAD)" == "$revision" ]] || { echo "Wrong revision in $dest" >&2; exit 1; }
-    [[ -z "$(git -C "$dest" status --porcelain --untracked-files=no)" ]] || { echo "Modified source in $dest" >&2; exit 1; }
-  else
-    git init -q "$dest"
-    git -C "$dest" remote add origin "$url"
-    git -C "$dest" fetch --depth 1 origin "$revision"
-    git -C "$dest" checkout --detach FETCH_HEAD
-  fi
-}
+source "$PROJECT_ROOT/scripts/checkout_source.sh"
 
 # Stock Ubuntu 18.04 CMake is too old for this pinned llama.cpp.
 # Build a private CMake only when no suitable version is present.

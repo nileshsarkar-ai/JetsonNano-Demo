@@ -31,3 +31,20 @@ No physical Nano was connected. JetPack package installation, GCC8/Linux linking
 7. Only then attempt optional training with the matching PyTorch environment and a real corpus.
 
 This package preserves model revisions, checksums, runtime commits, configurable seeds and parameters. Numerical results can still differ across architectures and library builds.
+
+## Regression checks — 18 September 2026
+
+Executed on macOS with Python 3.9.6, not on physical Nano hardware:
+
+- Seven standard-library unittest checks passed: model listing, no-argument help, unknown-model rejection, empty-prompt rejection, literal single-prompt commands, lazy camera startup/end-of-stream using mocked bindings, and retrying an incomplete local Git checkout while preserving modified sources.
+- All project Python files passed Python 3.6 grammar parsing. All shell scripts passed `bash -n`. This checks syntax, not execution under Python 3.6 or the Nano libraries.
+- Camera startup follows the pinned jetson-utils lazy-open behavior: capture occurs before checking stream state, and end-of-stream exits the loop. Hardware validation remains required.
+- Dependency checkout retries an empty, incomplete repository; existing wrong revisions or modified tracked source are rejected. Vision submodule downloads are retried on rerun.
+
+Run the hardware-free regression suite with:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+The board scripts and regression suite retain Python 3.6 syntax and standard-library APIs. External GPU training retains its separate Python 3.10/3.11 environment.

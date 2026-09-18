@@ -11,21 +11,16 @@ sudo apt-get install -y build-essential git cmake wget ca-certificates libglew-d
  libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev \
  libgstreamer-plugins-bad1.0-dev libpython3-dev python3-numpy espeak-ng
 cd "$PROJECT_ROOT"
-if [[ ! -d .vendor/jetson-inference ]]; then
-  mkdir -p .vendor
-  if [[ -f sources/jetson-inference.tar.gz ]]; then
-    sha256sum -c sources/jetson-inference.tar.gz.sha256
-    tar -xzf sources/jetson-inference.tar.gz -C .vendor
-  else
-    git init -q .vendor/jetson-inference
-    git -C .vendor/jetson-inference remote add origin https://github.com/dusty-nv/jetson-inference.git
-    git -C .vendor/jetson-inference fetch --depth 1 origin 45da40a8f3c180191b269f57f736caaa025b8a69
-    git -C .vendor/jetson-inference checkout --detach FETCH_HEAD
-    git -C .vendor/jetson-inference submodule update --init --recursive --depth 1
-  fi
+source "$PROJECT_ROOT/scripts/checkout_source.sh"
+mkdir -p .vendor
+if [[ ! -e .vendor/jetson-inference && -f sources/jetson-inference.tar.gz ]]; then
+  sha256sum -c sources/jetson-inference.tar.gz.sha256
+  tar -xzf sources/jetson-inference.tar.gz -C .vendor
 fi
-if [[ -d .vendor/jetson-inference/.git ]]; then
-  [[ "$(git -C .vendor/jetson-inference rev-parse HEAD)" == 45da40a8f3c180191b269f57f736caaa025b8a69 ]] || { echo "Unexpected vision source revision" >&2; exit 1; }
+if [[ ! -e .vendor/jetson-inference || -d .vendor/jetson-inference/.git ]]; then
+  checkout jetson-inference https://github.com/dusty-nv/jetson-inference.git 45da40a8f3c180191b269f57f736caaa025b8a69
+  # Also retry an interrupted submodule download on subsequent runs.
+  git -C .vendor/jetson-inference submodule update --init --recursive --depth 1
 fi
 # Disable upstream auto-installers, which otherwise attempt unpinned pip upgrades.
 CMAKE_BIN="$PROJECT_ROOT/.tools/cmake/bin/cmake"
