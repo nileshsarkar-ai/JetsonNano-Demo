@@ -202,3 +202,7 @@ All paths derive from the project directory, so the board code does not contain 
 ## Licensing
 
 Original project code is MIT licensed; see [LICENSE](LICENSE). Downloaded runtimes and model weights retain their upstream licenses. See [THIRD_PARTY.md](THIRD_PARTY.md).
+
+## Presentation coverage
+
+The included PPT is a 72-topic idea catalogue. See [the checked presentation-to-code coverage guide](docs/CATALOGUE-COVERAGE.md) for all original menu entries, the six new projects, and topics that do not yet have implementations.
