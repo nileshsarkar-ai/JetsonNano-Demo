@@ -19,7 +19,7 @@ After cloning, the easiest route is:
 bash scripts/run_demo.sh
 ```
 
-This performs steps 2–6 automatically in one terminal, opens chat, and stops its server when you exit. The manual steps below explain each stage; choose either the one-command route or the manual route.
+This opens the interactive menu. Select **1** to prepare dependencies and models, then select individual demos (for example **3** for chat). `/quit` returns from chat to the menu; **0** exits the menu. The server is stopped between selections. See [the menu and rehearsal guide](DEMO-MENU.md). The manual steps below explain the underlying commands.
 
 ## 2. Check the board
 

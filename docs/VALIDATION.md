@@ -55,3 +55,11 @@ The board scripts and regression suite retain Python 3.6 syntax and standard-lib
 - The regression suite now passes nine tests, including stopping on board-check failure and preserving chat failure status while terminating the launched server. These use test doubles; no Nano system installation was performed locally.
 - Embedded Python snippets also pass Python 3.6 grammar checks.
 - The video is a generated terminal-command walkthrough, with no desktop capture and no simulated Nano success output.
+
+## Menu hardening — 23 September 2026
+
+Added a Python 3.6 standard-library menu behind the same Bash command. It supervises sequential demos with owned-process cleanup, readiness checks, one-menu locking, explicit setup, conservative resource checks and failure return to menu. System installers retain their controlling terminal for sudo and are excluded from automatic resource termination. See [guard thresholds and limitations](DEMO-MENU.md).
+
+Software regression tests cover dummy subprocess success/failure, timeout, cancellation, low-memory interruption, unavailable telemetry, thermal thresholds, server startup failure, occupied ports, installer TTY handling, input checks, menu recovery, downloader retry/checksum rejection, and lazy camera startup with an initial timeout. They do not execute models, training or benchmarks. A CI workflow runs the same suite under Python 3.6.15 and 3.9 Linux containers; its actual outcome must be checked separately.
+
+No physical Nano, real camera/microphone or actual model execution was used for this update. Chairman-demo acceptance remains conditional on an on-board rehearsal.

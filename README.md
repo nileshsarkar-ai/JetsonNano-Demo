@@ -6,17 +6,25 @@ This implements a working subset of the 72-topic catalogue: local language model
 
 **Validation boundary:** the pinned runtimes and real small models were exercised on the development Mac (ARM64 CPU). This is not a claim of testing on a physical Nano. See [docs/VALIDATION.md](docs/VALIDATION.md) for actual checks and remaining board checks.
 
-## One-command setup and chat
+## One-command demo menu
 
-On the original Nano with JetPack 4 / Ubuntu 18.04, clone this repository, enter it, and run:
+On the original Nano with JetPack 4 / Ubuntu 18.04 and system Python 3.6:
 
 ```bash
+git clone https://github.com/nileshsarkar-ai/JetsonNano-Demo.git
+cd JetsonNano-Demo
 bash scripts/run_demo.sh
 ```
 
-This checks the board, installs system packages (sudo may ask for your password), builds CPU runtimes, downloads the three starter models, starts the local server, waits for readiness, and opens chat. Type `/quit` to exit chat and stop that server. Server logs are saved in `runs/`. To reduce build memory use, run `JOBS=1 bash scripts/run_demo.sh`. Reruns reuse verified models and existing builds; package checks still need Internet access. Camera and training remain optional separate labs.
+Already cloned? Run `git pull --ff-only` inside the repository, then `bash scripts/run_demo.sh`.
 
-[Watch the setup command walkthrough](docs/media/jetson-nano-setup.mp4) · [Copy the step-by-step commands](docs/SETUP-WALKTHROUGH.md). The video shows instructions, not recorded Nano execution.
+The command opens a menu. Choose **1** to prepare dependencies/models before the event, **2** to inspect the board, then choose demos one by one: chat, tokens, extraction, calculator, RAG, speech, stories, benchmark, evaluation, vision and optional tiny LoRA. Exiting a demo returns to the menu; **0** exits. Ctrl+C cancels the current action. Builds default to one job. Camera and PyTorch require separate optional preparation; external GPU QLoRA is unsupported on the Nano.
+
+The launcher adds memory/disk/thermal checks, exclusive menu locking, server readiness checks, bounded process cleanup, timeouts and session logs. These reduce failure risk; actual Nano rehearsal is still required. Package installers run directly in the terminal and are not resource-killed mid-install.
+
+[Menu, safeguards and event rehearsal](docs/DEMO-MENU.md) · [Setup commands](docs/SETUP-WALKTHROUGH.md) · [Command walkthrough video](docs/media/jetson-nano-setup.mp4)
+
+The sections below describe the individual commands for manual use.
 
 ## 1. Copy the code to the Nano
 

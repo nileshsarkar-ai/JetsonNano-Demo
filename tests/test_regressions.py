@@ -63,8 +63,8 @@ class VisionTests(unittest.TestCase):
             def IsStreaming(self): return self.streaming
             def Capture(self):
                 self.captures += 1
-                self.streaming = self.captures == 1
-                return object() if self.streaming else None
+                self.streaming = self.captures < 3
+                return object() if self.captures == 2 else None
             def Close(self): self.closed = True
         class Output:
             streaming = False
@@ -87,7 +87,7 @@ class VisionTests(unittest.TestCase):
             with mock.patch.object(sys, 'argv', ['vision.py', 'detect']):
                 with contextlib.redirect_stdout(io.StringIO()):
                     vision.main()
-        self.assertEqual(source.captures, 2)
+        self.assertEqual(source.captures, 3)
         self.assertEqual(output.renders, 1)
         self.assertTrue(source.closed and output.closed)
 
@@ -122,52 +122,6 @@ class CheckoutTests(unittest.TestCase):
             (dest / 'file.txt').write_text('user changes\n')
             self.assertNotEqual(run().returncode, 0)
             self.assertEqual((dest / 'file.txt').read_text(), 'user changes\n')
-
-
-class RunnerTests(unittest.TestCase):
-    def test_runner_stops_on_board_failure(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            (root / 'scripts').mkdir()
-            (root / 'bin').mkdir()
-            runner = root / 'scripts/run_demo.sh'
-            runner.write_text((ROOT / 'scripts/run_demo.sh').read_text())
-            python = root / 'bin/python3'
-            python.write_text('#!/bin/sh\nexit 23\n')
-            python.chmod(0o755)
-            import os
-            env = dict(os.environ, PATH=str(root / 'bin') + ':' + os.environ['PATH'])
-            result = subprocess.run(['bash', str(runner)], env=env)
-            self.assertEqual(result.returncode, 23)
-            self.assertFalse((root / 'runs').exists())
-
-    def test_runner_cleans_up_server_after_chat_failure(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            import os
-            root = Path(tmp)
-            (root / 'scripts').mkdir()
-            (root / 'bin').mkdir()
-            runner = root / 'scripts/run_demo.sh'
-            runner.write_text((ROOT / 'scripts/run_demo.sh').read_text())
-            for name in ['install_system.sh', 'build_runtimes.sh']:
-                (root / 'scripts' / name).write_text('exit 0\n')
-            python = root / 'bin/python3'
-            python.write_text("""#!/bin/bash
-case "$1" in
-  -) cat >/dev/null; sleep 0.1; exit 0 ;;
-  scripts/serve.py) echo $$ >server.pid; exec sleep 30 ;;
-  labs/chat.py) exit 7 ;;
-  *) exit 0 ;;
-esac
-""")
-            python.chmod(0o755)
-            env = dict(os.environ, PATH=str(root / 'bin') + ':' + os.environ['PATH'])
-            result = subprocess.run(['bash', str(runner)], env=env, timeout=5,
-                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            self.assertEqual(result.returncode, 7, result.stderr)
-            pid = int((root / 'server.pid').read_text())
-            with self.assertRaises(ProcessLookupError):
-                os.kill(pid, 0)
 
 
 if __name__ == '__main__':

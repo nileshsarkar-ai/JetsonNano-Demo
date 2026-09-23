@@ -16,6 +16,8 @@ def main():
     p.add_argument('--frames', type=int, default=0, help='0 means until stream ends')
     p.add_argument('--speak', action='store_true', help='Speak detected class names every 5 seconds')
     a, extra = p.parse_known_args()
+    if a.frames < 0 or not 0 <= a.threshold <= 1:
+        p.error('Use nonnegative frames and a threshold between 0 and 1')
     from jetson_inference import detectNet, imageNet, poseNet, segNet
     from jetson_utils import videoSource, videoOutput, cudaAllocMapped
     defaults = {'detect': 'ssd-mobilenet-v2', 'classify': 'googlenet',
@@ -35,14 +37,19 @@ def main():
     output = videoOutput(a.output, argv=argv)
     overlay = None
     frame, last_speech, speaker = 0, -5.0, None
+    missed_frames = 0
     try:
         # Capture/Render open the streams lazily in jetson-utils.
         while True:
             img = source.Capture()
             if img is None:
-                if not source.IsStreaming() or not output.IsStreaming():
+                if not source.IsStreaming() or (frame and not output.IsStreaming()):
                     break
+                missed_frames += 1
+                if missed_frames >= 10:
+                    raise RuntimeError('Camera returned no frames ten times. Check the camera connection or input URI.')
                 continue
+            missed_frames = 0
             frame += 1
             record = {'frame': frame, 'mode': a.mode}
             labels = []

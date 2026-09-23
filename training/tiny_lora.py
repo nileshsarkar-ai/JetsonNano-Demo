@@ -163,6 +163,8 @@ def main():
         model.train()
         x, y = batch(train, train_rng)
         loss = F.cross_entropy(model(x).reshape(-1, len(vocab)), y.reshape(-1))
+        if not torch.isfinite(loss).item():
+            raise RuntimeError('Non-finite training loss; no checkpoint will be written.')
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0)
@@ -177,7 +179,7 @@ def main():
                 'adapted': enabled, 'seed': args.seed, 'steps': args.steps,
                 'learning_rate': args.learning_rate, 'batch_size': args.batch_size,
                 'corpus_sha256': hashlib.sha256(corpus.encode('utf-8')).hexdigest(),
-                'torch_version': torch.__version__, 'device': args.device}, str(args.output))
+                'torch_version': str(torch.__version__), 'device': args.device}, str(args.output))
     print('Saved', args.output)
 
 

@@ -5,6 +5,9 @@ import hashlib
 import json
 import os
 import shutil
+import socket
+import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -30,8 +33,20 @@ def download(url, dest, expected_hash, size=0):
     if shutil.disk_usage(str(dest.parent)).free < size + 64 * 1024 ** 2:
         raise OSError('Insufficient free disk space for ' + str(dest))
     print('Downloading:', url, flush=True)
-    with urllib.request.urlopen(url, timeout=120) as response, partial.open('wb') as output:
-        shutil.copyfileobj(response, output, length=1024 * 1024)
+    # Restart a partial transfer, but never retry a checksum mismatch or disk error.
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(url, timeout=120) as response, partial.open('wb') as output:
+                shutil.copyfileobj(response, output, length=1024 * 1024)
+            break
+        except urllib.error.HTTPError as error:
+            if error.code not in (408, 429, 500, 502, 503, 504) or attempt == 2:
+                raise
+        except (urllib.error.URLError, socket.timeout, ConnectionError):
+            if attempt == 2:
+                raise
+        print('Network transfer interrupted. Retrying ({}/3)...'.format(attempt + 2), flush=True)
+        time.sleep(2 ** (attempt + 1))
     if sha256(partial) != expected_hash:
         raise ValueError('SHA-256 mismatch. Incomplete file retained at ' + str(partial))
     os.replace(str(partial), str(dest))
