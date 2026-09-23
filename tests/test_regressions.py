@@ -64,7 +64,7 @@ class VisionTests(unittest.TestCase):
             def Capture(self):
                 self.captures += 1
                 self.streaming = self.captures < 3
-                return object() if self.captures == 2 else None
+                return types.SimpleNamespace(width=640, height=480) if self.captures == 2 else None
             def Close(self): self.closed = True
         class Output:
             streaming = False

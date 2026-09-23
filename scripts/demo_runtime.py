@@ -191,14 +191,18 @@ class Supervisor:
             if sock.connect_ex(('127.0.0.1', self.port)) == 0:
                 raise DemoError('Port {} is occupied. Stop your other server first; it will not be killed.'.format(self.port))
 
-    def start_server(self):
+    def start_server(self, model=None):
         resource_check(start=True)
         self.require_free_port()
         self.server_stream = (self.session / 'server.log').open('ab')
         try:
-            self.server = subprocess.Popen([sys.executable, 'scripts/serve.py'], cwd=str(self.root),
+            command = [sys.executable, 'scripts/serve.py']
+            if model is not None:
+                command += ['--model', model]
+            self.server = subprocess.Popen(command, cwd=str(self.root),
                                            stdout=self.server_stream, stderr=subprocess.STDOUT,
                                            start_new_session=True)
+            self.event(event='server-start', model=model or self.config.get('model'), pid=self.server.pid)
             deadline = time.monotonic() + 600
             print('Loading model (up to 10 minutes). Ctrl+C cancels.', flush=True)
             while time.monotonic() < deadline:

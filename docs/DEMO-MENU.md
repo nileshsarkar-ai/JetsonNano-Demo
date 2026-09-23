@@ -13,10 +13,10 @@ For an existing clone, update first with `git pull --ff-only`. The launcher chec
 
 ## Before the event
 
-1. Select **1 — Prepare / repair core setup** with Internet connected. This installs system packages (sudo may ask for your password), builds pinned CPU runtimes with **one build job by default**, and downloads/verifies the configured small LLM, Whisper, and TinyStories 15M. Allow hours for first compilation and at least 6 GiB free disk headroom. Failed network downloads retry up to three times; wrong checksums fail visibly. Re-running preparation reuses verified downloads and builds.
-2. Select **2 — Board / dependency / resource report**. Resolve missing components. Optional camera dependencies and PyTorch are not required for core demos.
+1. Select **1 — Prepare / repair core setup** with Internet connected. This installs system packages (sudo may ask for your password), builds pinned CPU runtimes with **one build job by default**, and downloads/verifies the configured small LLM, showcase SmolLM2-360M Q4, Whisper, and TinyStories 15M. Allow hours for first compilation and at least 6 GiB free disk headroom. Failed network downloads retry up to three times; wrong checksums fail visibly. Re-running preparation reuses verified downloads and builds.
+2. Select **2 — Board / dependency / resource report**. Then use **S → tour** or **C** for the student projects. See [SHOWCASE.md](SHOWCASE.md). Resolve missing components. Optional camera dependencies and PyTorch are not required for core demos.
 3. Rehearse **each selected demo on the actual Nano**, with the same camera, microphone, display, notes, and power supply used at the event. Check the actual generated answers, not just exit status.
-4. For vision, use **13 → install**, then run the intended camera mode once while online. This primes first-use model downloads and TensorRT engine compilation. PyTorch training uses a separately installed matching legacy wheel; never install external GPU requirements on the Nano.
+4. For vision, use **U → 13 → install**, then run the intended camera mode once while online. This primes first-use model downloads and TensorRT engine compilation. PyTorch training uses a separately installed matching legacy wheel; never install external GPU requirements on the Nano.
 5. During the event, open the same launcher and choose the prepared demo. No apt/build/download runs happen automatically when entering the menu. Verified cached core models are checked locally before use.
 
 Preparation without opening the menu:
@@ -31,7 +31,9 @@ Read-only board/resource report:
 bash scripts/run_demo.sh --check
 ```
 
-## Menu map
+## Developer utility map
+
+The main menu leads with **S** (offline projects) and **C** (camera projects). Options 3–14 below are inside **U**, not the main presentation menu.
 
 | Option | Demonstration | What to prepare |
 |---|---|---|
@@ -69,4 +71,4 @@ External GPU LoRA/QLoRA cannot run on the original Nano. The menu points to the 
 
 Software tests use dummy processes and mocked hardware/network responses. They do not establish Nano inference speed, model accuracy, TensorRT compatibility, audio/camera reliability, or immunity to sudden memory spikes, kernel OOM, power loss, SIGKILL of the launcher, overheating, or storage failures. A killed launcher cannot guarantee cleanup of every descendant. Do not advertise a flawless hardware demo until the intended sequence has passed on the actual board.
 
-Recommended short rehearsal: **2 → 3 → 7 → 10 → 0**, checking each result. Add camera, speech, RAG or training only after their own complete rehearsal. If a selection fails, read its log and resolve the cause before putting it in the chairman's sequence.
+Recommended student rehearsal: **2 → S → tour → 0**, checking actual answers. Rehearse **C → memory / hunt / journal** separately before presenting camera projects. Speech and training are optional developer utilities. If a selection fails, read its log and resolve the cause before putting it in the chairman's sequence.

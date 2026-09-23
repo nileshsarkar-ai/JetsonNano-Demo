@@ -10,6 +10,9 @@ import shutil
 import signal
 import subprocess
 import sys
+import time
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'labs'))
+from camera_tasks import summarize_frames, records_from_log, compare, quest_score
 from demo_runtime import DemoError, ROOT, Supervisor, available_memory, resource_check, temperature
 
 
@@ -76,10 +79,10 @@ class Menu:
         # The downloader verifies cached files without Internet access.
         self.py('scripts/download.py', key, timeout=300, monitor=False)
 
-    def llm(self):
+    def llm(self, model=None):
         self.need_binary('.vendor/llama.cpp/build/bin/llama-server')
-        self.model(self.s.config['model'])
-        self.s.start_server()
+        self.model(model or self.s.config['model'])
+        self.s.start_server(model=model)
 
     def setup(self):
         resource_check(start=True)
@@ -92,14 +95,14 @@ class Menu:
         self.s.run(['bash', 'scripts/install_system.sh'], monitor=False, terminal=True)
         self.s.run(['env', 'JOBS=' + jobs, 'bash', 'scripts/build_runtimes.sh'], timeout=14400)
         self.py('scripts/download.py', self.s.config['model'], self.s.config['whisper_model'],
-                'stories15m', timeout=7200)
-        print('Core preparation completed. Select 2, then rehearse each planned demo.')
+                'stories15m', 'smol360-q4', timeout=7200)
+        print('Core preparation completed. Select 2, then S > tour. Optional camera setup is under U > 13 > install.')
 
     def status(self):
         self.py('scripts/check_board.py', '--strict', monitor=False)
         print('Available RAM: {} MiB; highest reported temperature: {} C'.format(available_memory(), temperature()))
         print('Free disk: {:.1f} GiB'.format(shutil.disk_usage(str(ROOT)).free / 1024 ** 3))
-        for key in (self.s.config['model'], self.s.config['whisper_model'], 'stories15m'):
+        for key in (self.s.config['model'], 'smol360-q4', self.s.config['whisper_model'], 'stories15m'):
             path = ROOT / 'models' / self.manifest[key]['file']
             print('{}: {}'.format(key, 'present (hash checked before use)' if path.is_file() else 'MISSING'))
         for relative in ('.vendor/llama.cpp/build/bin/llama-server', '.vendor/llama.cpp/build/bin/llama-bench',
@@ -172,7 +175,7 @@ class Menu:
         source = prompt('Camera URI or video path', 'v4l2:///dev/video0')
         if source.startswith('v4l2://') and not Path(source[len('v4l2://'):]).exists():
             raise DemoError('Camera device does not exist. Check connection and camera URI.')
-        output = prompt('Output URI (use a file path on headless boards)', 'display://0' if os.environ.get('DISPLAY') else str(self.s.session / 'vision.mp4'))
+        output = prompt('Output URI (use a file path on headless boards)', 'display://0' if os.environ.get('DISPLAY') else str(self.s.session / ('vision-{}.mp4'.format(self.s.counter + 1))))
         frames = number('Maximum frames', 300, 1, 3000)
         args = ['--frames', frames]
         if mode == 'detect' and prompt('Speak detected labels? y/n', 'n') == 'y':
@@ -197,10 +200,108 @@ class Menu:
                      '--batch-size', '1', '--output', str(self.s.session / ('tiny-{}.pt'.format(self.s.counter + 1)))]
         self.py('training/tiny_lora.py', mode, '--device', 'cpu', *args, timeout=1800)
 
+    def capture_snapshot(self, source):
+        if any(importlib.util.find_spec(x) is None for x in ('jetson_inference', 'jetson_utils')):
+            raise DemoError('Vision unavailable. Prepare it using Utilities > 13 > install; text projects still work.')
+        if source.startswith('v4l2://') and not Path(source[len('v4l2://'):]).exists():
+            raise DemoError('Camera device unavailable; skipping camera project.')
+        # Every call finishes and releases TensorRT before the next LLM load.
+        output = 'display://0' if os.environ.get('DISPLAY') else str(self.s.session / ('sample-{}.mp4'.format(self.s.counter + 1)))
+        self.py('labs/vision.py', 'detect', source, output, '--frames', '5', '--interval', '0.4', timeout=120)
+        snapshot = summarize_frames(records_from_log(self.s.session / '{:03d}.log'.format(self.s.counter)))
+        path = self.s.session / ('snapshot-{}.json'.format(self.s.counter))
+        path.write_text(json.dumps(snapshot, indent=2))
+        print('Stable multi-frame observation:', json.dumps(snapshot['objects']), flush=True)
+        return snapshot
+
+    def camera_projects(self, automatic=False):
+        print('\nCAMERA PROJECTS: memory / hunt / journal')
+        print('memory: compare before/after; hunt: AI-planned visual challenge; journal: a three-observation scene history.')
+        print('Keep the camera fixed. Prepare a cup, bottle, book or phone; no face identification is used.')
+        mode = 'journal' if automatic else prompt('Camera project', 'memory').lower()
+        if mode not in ('memory', 'hunt', 'journal'):
+            raise DemoError('Choose memory, hunt or journal.')
+        source = 'v4l2:///dev/video0' if automatic else prompt('Camera URI', 'v4l2:///dev/video0')
+        history = []
+        # Establish camera viability before asking the model to create a quest.
+        history.append(self.capture_snapshot(source))
+        if mode == 'hunt':
+            self.llm('smol360-q4')
+            path = self.s.session / ('quest-{}.json'.format(self.s.counter + 1))
+            self.py('labs/camera_tasks.py', 'plan', '--output', str(path))
+            self.s.stop_server()
+            plan = json.loads(path.read_text())
+            observations = []
+            for round_id in range(3):
+                input('Arrange the quest objects in view, then Enter to scan (Ctrl+C cancels): ')
+                observations.append(self.capture_snapshot(source))
+                score = quest_score(plan, observations)
+                print('QUEST SCORE:', json.dumps(score), flush=True)
+                (self.s.session / ('quest-score-{}.json'.format(self.s.counter))).write_text(json.dumps(score, indent=2))
+                if score['complete']:
+                    print('All targets observed across this quest. Completion uses detector evidence, not model judgment.')
+                    break
+            return
+        captures = 2 if mode == 'memory' else 3
+        for index in range(1, captures):
+            if automatic:
+                print('Move, add or remove a tabletop object now. Next observation in 5 seconds.', flush=True)
+                time.sleep(5)
+            else:
+                input('Move, add or remove an object, keep the camera fixed, then Enter: ')
+            history.append(self.capture_snapshot(source))
+            print('Changes:', json.dumps(compare(history[-2], history[-1])), flush=True)
+        path = self.s.session / ('scene-history-{}.json'.format(self.s.counter))
+        path.write_text(json.dumps(history, indent=2))
+        if not any(any(value for value in compare(a, b).values()) for a, b in zip(history, history[1:])):
+            print('No stable changes observed. History saved; no invented explanation or unnecessary LLM load.')
+            return
+        self.llm('smol360-q4')
+        self.py('labs/camera_tasks.py', 'explain', str(path))
+
+    def showcase(self):
+        print('\nSHOWCASE PROJECTS — small local LLM, no cloud calls after preparation\n tour       Automatic tour: multi-tool agent -> document detective -> story director (+ optional camera)\n agent      Mission control: an LLM plans tools, executes them, and combines evidence\n detective  Ask the bundled fictional exhibit brief, with visible evidence\n story      Interactive story director: choose a scene and add a twist\n camera     Scene-memory detective, AI scavenger hunt, workspace change journal\n')
+        project = prompt('Choose project', 'tour').lower()
+        if project == 'camera':
+            self.camera_projects()
+            return
+        if project not in ('tour', 'agent', 'detective', 'story'):
+            raise DemoError('Choose a showcase name shown above.')
+        self.llm('smol360-q4')
+        if project == 'tour':
+            for name in ('agent', 'detective'):
+                print('\n=== ' + name.upper() + ' ===', flush=True)
+                self.py('labs/projects.py', name)
+            print('\n=== STORY DIRECTOR ===', flush=True)
+            self.py('labs/projects.py', 'story', '--auto')
+            self.s.stop_server()
+            if (Path('/dev/video0').exists() and
+                    all(importlib.util.find_spec(x) is not None for x in ('jetson_inference', 'jetson_utils'))):
+                try:
+                    self.camera_projects(automatic=True)
+                except (DemoError, OSError, ValueError) as error:
+                    print('Optional camera skipped: {}'.format(error))
+                finally:
+                    self.s.stop_server()
+            else:
+                print('Optional camera skipped: no prepared /dev/video0 camera and vision bindings.')
+            print('Tour complete. Text outputs came from the local model; skipped stages were reported.')
+        else:
+            args = []
+            if project in ('agent', 'detective'):
+                question = prompt('Your request', 'Read the exhibit brief and current board memory, then give a guide briefing.' if project == 'agent' else 'What does the Ocean Watch exhibit measure?')
+                args = ['--question', question]
+            self.py('labs/projects.py', project, *args, timeout=0 if project == 'story' else 900)
+
     def action(self, choice):
-        if choice in [str(x) for x in range(3, 15)]:
+        if choice.lower() in ('s', 'c', 't', 'u') or choice in [str(x) for x in range(3, 15)]:
             self.s.require_free_port()
-        if choice == '1': self.setup()
+        if choice.lower() == 'c': self.camera_projects()
+        elif choice.lower() == 'u':
+            print('3 chat; 4 question; 5 tokens; 6 extraction; 7 calculator; 8 RAG; 9 speech; 10 stories; 11 benchmark; 12 evaluation; 13 vision setup; 14 tiny LoRA')
+            self.action(number('Utility', 13, 3, 14))
+        elif choice.lower() == 's': self.showcase()
+        elif choice == '1': self.setup()
         elif choice == '2': self.status()
         elif choice == '3':
             self.llm()
@@ -227,23 +328,21 @@ class Menu:
             self.py('labs/evaluate.py', dataset, '--output', str(self.s.session / ('evaluation-{}.jsonl'.format(self.s.counter + 1))), timeout=3600)
         elif choice == '13': self.vision()
         elif choice == '14': self.training()
-        else: raise DemoError('Choose a number shown in the menu.')
+        else: raise DemoError('Choose a number or letter shown in the menu.')
 
 
 MENU = '''
-JETSON NANO DEMO MENU — one demo at a time
- 1  Prepare / repair core setup (Internet + sudo; do before event)
+JETSON NANO — OFFLINE AI PROJECTS
+ 1  Prepare models and core dependencies (before the event)
  2  Board / dependency / resource report
- 3  Interactive chat             4  Single question
- 5  Token inspection             6  JSON extraction
- 7  Calculator                   8  RAG over your notes
- 9  Speech / voice assistant    10  TinyStories
-11  CPU benchmark              12  Evaluate your JSONL prompts
-13  Camera / vision            14  Tiny CPU LoRA (optional PyTorch)
+ S  Offline AI projects + automatic tour
+ C  Camera projects: scene memory, visual quests, change journal
+ U  Developer utilities / optional vision and PyTorch labs
  0  Exit
-Ctrl+C stops the current demo and returns here. No automatic demo replay.
-External GPU QLoRA is not supported on this Nano; see docs/TRAINING.md.
+Ctrl+C cancels a project and returns here. Projects run sequentially.
+Use S -> tour for the prepared automatic sequence; camera is optional.
 '''
+
 
 
 def main():

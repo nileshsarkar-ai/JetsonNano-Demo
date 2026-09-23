@@ -19,7 +19,7 @@ After cloning, the easiest route is:
 bash scripts/run_demo.sh
 ```
 
-This opens the interactive menu. Select **1** to prepare dependencies and models, then select individual demos (for example **3** for chat). `/quit` returns from chat to the menu; **0** exits the menu. The server is stopped between selections. See [the menu and rehearsal guide](DEMO-MENU.md). The manual steps below explain the underlying commands.
+This opens the interactive menu. Select **1** to prepare dependencies and models, then select **S → tour** for the student showcase or **C** for camera projects. `/quit` returns from chat to the menu; **0** exits the menu. The server is stopped between selections. See [the menu and rehearsal guide](DEMO-MENU.md). The manual steps below explain the underlying commands.
 
 ## 2. Check the board
 
@@ -43,7 +43,7 @@ Enter the Nano's password if sudo requests it. The initial build may take a long
 
 ```bash
 python3 scripts/download.py --list
-python3 scripts/download.py smol135-q4 whisper-tiny-en stories15m
+python3 scripts/download.py smol135-q4 smol360-q4 whisper-tiny-en stories15m
 ```
 
 Wait for verified downloads.

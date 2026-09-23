@@ -2,7 +2,7 @@
 
 Runnable teaching code for the **original Jetson Nano 4GB (2019)** on **JetPack 4 / Ubuntu 18.04**. The board scripts use **Python 3.6+ and its standard library**. The default inference path uses native **CPU-only** C/C++ runtimes.
 
-This implements a working subset of the 72-topic catalogue: local language models, sampling and tokenization, JSON extraction, lexical RAG, a calculator tool, Whisper transcription, a push-to-talk assistant, TinyStories, model comparisons, and tiny ordinary LoRA. Separate scripts cover modern-GPU LoRA/QLoRA training. Camera code covers detection, classification, pose/gesture rules, segmentation, per-frame object counts and a talking camera. See [docs/VISION.md](docs/VISION.md). Neural TTS, semantic embeddings and speculative decoding remain catalogue extensions, not implemented labs.
+The student showcase includes an LLM tool-planning assistant, a document detective, an interactive story director, and camera projects for scene memory, visual scavenger hunts and change journals. Projects run sequentially on the Nano, with short local-model outputs and an optional camera. Individual language, speech, vision and training labs remain under developer utilities. External-GPU QLoRA is a separate workflow, not a Nano demo. See [the showcase guide](docs/SHOWCASE.md).
 
 **Validation boundary:** the pinned runtimes and real small models were exercised on the development Mac (ARM64 CPU). This is not a claim of testing on a physical Nano. See [docs/VALIDATION.md](docs/VALIDATION.md) for actual checks and remaining board checks.
 
@@ -18,11 +18,11 @@ bash scripts/run_demo.sh
 
 Already cloned? Run `git pull --ff-only` inside the repository, then `bash scripts/run_demo.sh`.
 
-The command opens a menu. Choose **1** to prepare dependencies/models before the event, **2** to inspect the board, then choose demos one by one: chat, tokens, extraction, calculator, RAG, speech, stories, benchmark, evaluation, vision and optional tiny LoRA. Exiting a demo returns to the menu; **0** exits. Ctrl+C cancels the current action. Builds default to one job. Camera and PyTorch require separate optional preparation; external GPU QLoRA is unsupported on the Nano.
+The command opens a student-facing project menu. Choose **1** to prepare before class, then **S → tour** for the automatic sequence: an LLM tool-planning assistant, a local-document detective, and an interactive story director. **C** offers scene-memory comparison, an AI-planned visual scavenger hunt, and a camera change journal. Optional camera failure is reported and skipped in the tour. Calculators, benchmarks and other low-level labs are under **U — Developer utilities**.
 
-The launcher adds memory/disk/thermal checks, exclusive menu locking, server readiness checks, bounded process cleanup, timeouts and session logs. These reduce failure risk; actual Nano rehearsal is still required. Package installers run directly in the terminal and are not resource-killed mid-install.
+Prepared text projects need only the Nano: no external GPU, paid API, microphone or speaker. The showcase uses pinned SmolLM2-360M Q4 with short outputs; no real-time speed claim is made. Camera processing and LLM generation run sequentially to avoid loading both at once. The launcher includes memory/disk/thermal checks, timeouts, server cleanup and session logs. These reduce risk but do not replace a real-board rehearsal.
 
-[Menu, safeguards and event rehearsal](docs/DEMO-MENU.md) · [Setup commands](docs/SETUP-WALKTHROUGH.md) · [Command walkthrough video](docs/media/jetson-nano-setup.mp4)
+[Showcase projects and student sequence](docs/SHOWCASE.md) · [Menu safeguards](docs/DEMO-MENU.md) · [Setup commands](docs/SETUP-WALKTHROUGH.md) · [Walkthrough video](docs/media/jetson-nano-setup.mp4)
 
 The sections below describe the individual commands for manual use.
 
@@ -48,10 +48,10 @@ Setup fetches pinned runtime sources when they are not already cached locally. M
 
 ```bash
 python3 scripts/download.py --list
-python3 scripts/download.py smol135-q4 whisper-tiny-en stories15m
+python3 scripts/download.py smol135-q4 smol360-q4 whisper-tiny-en stories15m
 ```
 
-Downloads use **exact Hugging Face revisions and SHA-256 checksums** in `models.json`. Partial downloads never replace verified files. There are no automatic retries or hidden fallback models.
+Downloads use **exact Hugging Face revisions and SHA-256 checksums** in `models.json`. Partial downloads never replace verified files. Transient network failures retry at most three times. Checksum errors fail visibly; there are no hidden fallback models.
 
 | Key | Model | Purpose |
 |---|---|---|
