@@ -50,3 +50,7 @@ Software CI verifies the launcher and analysis logic under Python 3.6.15 and 3.9
 Session logs, resolved base configuration and command events are under `runs/demo-*`. Camera projects also retain raw capture logs, five-frame summaries, scene histories, quest plans and scores; headless captures save MP4 files. These local demonstration records are not automatic off-machine research backups or W&B experiments. Do not use this menu as a substitute for an approved research runner.
 
 The full active programme also includes the nine local text experiments in [Named experiments](EXPERIMENTS.md).
+
+## Text conversation projects
+
+**29 Socratic Study Partner** asks guiding questions about a topic and uses each student answer in the next turn. **30 Mystery Character Interview** lets students question a fictional Moon-greenhouse researcher and guess the profession with `/guess`. Both retain the generated conversation, allow `/quit`, and stop after six model replies. The guess is scored by code against the predefined fictional role. No audio input is required.

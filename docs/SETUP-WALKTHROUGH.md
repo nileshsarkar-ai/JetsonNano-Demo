@@ -14,7 +14,7 @@ Already cloned? Run `git pull --ff-only` inside that folder, then the same Bash 
 2. Choose **2** to inspect board resources and dependencies.
 3. Select a [named experiment](EXPERIMENTS.md) directly. Start with **15 Mission Control**, **16 Document Detective**, or **17 Story Director**.
 4. For a camera, first select **13**, then **install**. Rehearse **13 → detect** before choosing **18 Scene Memory**, **19 Visual Scavenger Hunt**, or **20 Change Journal**. USB uses `v4l2:///dev/video0`; an appropriate CSI camera may use `csi://0`.
-5. New language demonstrations are **9**, **14**, and **22–28**. They need only the prepared language runtime.
+5. New language demonstrations are **9**, **14**, and **22–30**. They need only the prepared language runtime.
 6. Ctrl+C cancels a supervised demo; **0** exits. Run the Bash command again to return later.
 
 The optional **21** sequence runs the original prepared text projects and tries a prepared USB camera. It does not run every experiment or replace rehearsal. Missing camera is reported and skipped.

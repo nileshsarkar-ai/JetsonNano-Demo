@@ -1,6 +1,6 @@
 # Current presentation coverage
 
-The current scope is the **Nano and optional camera only**, as requested on 2026-09-23. The active menu and `Jetson_Nano_Local_AI_Experiments.pptx` contain [25 named experiment entries](EXPERIMENTS.md), plus setup/report and an optional sequence. Each entry maps to executable code; no entry is a placeholder for external work.
+The current scope is the **Nano and optional camera only**, as requested on 2026-09-23. The active menu and `Jetson_Nano_Local_AI_Experiments.pptx` contain [27 named experiment entries](EXPERIMENTS.md), plus setup/report and an optional sequence. Each entry maps to executable code; no entry is a placeholder for external work.
 
 The original `Jetson_Nano_Modern_AI_Catalogue.pptx` remains an archived 72-topic ideas reference. Its routes described feasibility, not implemented or tested demonstrations. It is not the current presentation programme.
 
@@ -9,7 +9,7 @@ The original `Jetson_Nano_Modern_AI_Catalogue.pptx` remains an archived 72-topic
 | Named entries | Implementation |
 |---|---|
 | 3–8: conversation, question, tokens, extraction, calculator, notes RAG | Original `labs/chat.py`, `inspect_tokens.py`, `extract.py`, `calculator.py`, `rag.py` |
-| 9, 14, 22–28: memory, sampling, prompting, few-shot learning, triage, summary, injection, abstention, context | `labs/text_experiments.py` |
+| 9, 14, 22–30: memory, sampling, prompting, few-shot learning, triage, summary, injection, abstention, context, tutor, character interview | `labs/text_experiments.py` |
 | 10: TinyStories | `labs/stories.py` |
 | 11–12: benchmark and prompt evaluation | `scripts/benchmark.py`, `labs/evaluate.py` |
 | 13: camera detection/classification/pose/segmentation | `labs/vision.py` |

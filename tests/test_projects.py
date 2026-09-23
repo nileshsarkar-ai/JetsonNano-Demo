@@ -31,7 +31,7 @@ class ProjectTests(unittest.TestCase):
         supervisor = mock.Mock(config=json.loads((ROOT / 'config.json').read_text()))
         menu = demo_menu.Menu(supervisor)
         modes = {'9': 'memory', '14': 'sampling', '22': 'prompts', '23': 'fewshot',
-                 '24': 'triage', '25': 'summary', '26': 'injection', '27': 'abstain', '28': 'context'}
+                 '24': 'triage', '25': 'summary', '26': 'injection', '27': 'abstain', '28': 'context', '29': 'tutor', '30': 'mystery'}
         with mock.patch.object(menu, 'text_experiment') as run:
             for choice, mode in modes.items():
                 menu.action(choice)

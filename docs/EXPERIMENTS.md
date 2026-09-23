@@ -29,7 +29,9 @@ Run `bash scripts/run_demo.sh` after cloning. To print the list without starting
 | 26 | Prompt Injection Defense Lab | Compare unprotected and separated instructions |
 | 27 | Answer or Abstain | Known answer and deliberately missing evidence |
 | 28 | Context Memory Challenge | Recall under increasing distractor text |
+| 29 | Socratic Study Partner | A guided text conversation with follow-up questions |
+| 30 | Mystery Character Interview | Interview a fictional character and guess the profession |
 
 **21** runs the prepared student demonstrations in sequence. **0** exits. Ctrl+C cancels an active demo.
 
-There are 25 named experiment entries, plus the optional sequence. The active scope is Nano plus optional camera only: no microphone, speaker, external GPU, training, cloud API, or power meter. The old 72-topic catalogue is a historical ideas reference; unsupported topics are excluded rather than presented as working demos. See [presentation coverage](CATALOGUE-COVERAGE.md) for the remaining implementation gaps and external-hardware requirements. No physical Nano validation has been performed here.
+There are 27 named experiment entries, plus the optional sequence. The active scope is Nano plus optional camera only: no microphone, speaker, external GPU, training, cloud API, or power meter. The old 72-topic catalogue is a historical ideas reference; unsupported topics are excluded rather than presented as working demos. See [presentation coverage](CATALOGUE-COVERAGE.md) for the remaining implementation gaps and external-hardware requirements. No physical Nano validation has been performed here.

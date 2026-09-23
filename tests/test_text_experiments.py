@@ -10,6 +10,29 @@ import text_experiments as lab
 
 
 class TextExperimentTests(unittest.TestCase):
+    def test_conversation_preserves_actual_previous_response(self):
+        output = io.StringIO()
+        with mock.patch.object(lab, 'bounded_input', side_effect=['floating', 'It is less dense.', '/quit']):
+            with mock.patch.object(lab, 'generate', side_effect=[{'content': 'What affects floating?'}, {'content': 'How could you test that?'}]) as generate:
+                lab.Experiment(output).run('tutor', None)
+        self.assertIn({'role': 'assistant', 'content': 'What affects floating?'}, generate.call_args[0][0])
+        self.assertTrue(generate.call_args[1]['trim_history'])
+        self.assertEqual(len(output.getvalue().splitlines()), 2)
+
+    def test_mystery_guess_scored_by_code_not_model(self):
+        output = io.StringIO()
+        with mock.patch.object(lab, 'bounded_input', return_value='/guess botanist'):
+            with mock.patch.object(lab, 'generate', return_value={'content': 'I study leaves.'}) as generate:
+                lab.Experiment(output).run('mystery', None)
+        self.assertEqual(generate.call_count, 1)
+        self.assertTrue(json.loads(output.getvalue().splitlines()[-1])['correct'])
+
+    def test_conversation_stops_after_six_model_replies(self):
+        with mock.patch.object(lab, 'bounded_input', return_value='student reply'):
+            with mock.patch.object(lab, 'generate', return_value={'content': 'guiding question'}) as generate:
+                lab.Experiment(io.StringIO()).run('tutor', None)
+        self.assertEqual(generate.call_count, 6)
+
     def test_memory_persists_and_replaces_explicit_keys(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'facts.json'

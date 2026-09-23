@@ -210,3 +210,5 @@ The included PPT is a 72-topic idea catalogue. See [the checked presentation-to-
 Current classroom presentation: [Nano Local AI Experiments](docs/Jetson_Nano_Local_AI_Experiments.pptx). The earlier 72-topic catalogue is an archived ideas reference, not the active demo programme.
 
 Historical speech setup is now explicit opt-in: `WITH_AUDIO=1 bash scripts/install_system.sh`, `WITH_AUDIO=1 bash scripts/build_runtimes.sh`, then `python3 scripts/download.py whisper-tiny-en`. This is outside the current classroom scope.
+
+The classroom PPT uses a light theme and explains the 27 named experiments. Text conversations include **29 Socratic Study Partner** and **30 Mystery Character Interview**. Technical validation notes remain in the slide notes and [validation guide](docs/VALIDATION.md).

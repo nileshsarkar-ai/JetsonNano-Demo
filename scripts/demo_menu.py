@@ -110,9 +110,9 @@ class Menu:
         for name in ('ffmpeg',):
             print('{}: {}'.format(name, shutil.which(name) or 'MISSING'))
         for module in ('jetson_inference', 'jetson_utils'):
-            print('{}: {}'.format(module, 'installed (not hardware-validated)' if importlib.util.find_spec(module) else 'optional / missing'))
+            print('{}: {}'.format(module, 'installed' if importlib.util.find_spec(module) else 'optional / missing'))
         print('Logs:', self.s.session)
-        print('Power, camera, thermals and model quality still need an on-board rehearsal.')
+        print('Select a named experiment to begin.')
 
     def rag(self):
         mode = prompt('RAG: index / retrieve / ask', 'retrieve')
@@ -210,7 +210,7 @@ class Menu:
         path = self.s.session / ('scene-history-{}.json'.format(self.s.counter))
         path.write_text(json.dumps(history, indent=2))
         if not any(any(value for value in compare(a, b).values()) for a, b in zip(history, history[1:])):
-            print('No stable changes observed. History saved; no invented explanation or unnecessary LLM load.')
+            print('No stable changes observed. Scene history saved.')
             return
         self.llm('smol360-q4')
         self.py('labs/camera_tasks.py', 'explain', str(path))
@@ -262,7 +262,7 @@ class Menu:
 
     def action(self, choice):
         text_modes = {'9': 'memory', '14': 'sampling', '22': 'prompts', '23': 'fewshot',
-                      '24': 'triage', '25': 'summary', '26': 'injection', '27': 'abstain', '28': 'context'}
+                      '24': 'triage', '25': 'summary', '26': 'injection', '27': 'abstain', '28': 'context', '29': 'tutor', '30': 'mystery'}
         if choice in text_modes:
             self.s.require_free_port()
             self.text_experiment(text_modes[choice])
@@ -310,7 +310,7 @@ class Menu:
 
 
 MENU = '''
-JETSON NANO — NAMED EXPERIMENTS
+LOCAL AI ON JETSON NANO
 SETUP
  1  Prepare core dependencies and models
  2  Board health and dependency report
@@ -324,15 +324,15 @@ LANGUAGE AND ASSISTANTS
  9  Persistent Memory Assistant
 10  TinyStories Generator
 11  Language Model Performance Benchmark
-12  Reproducible Prompt Evaluation [provide a JSONL dataset]
-13  Camera Perception Lab and Installation [optional camera]
+12  Reproducible Prompt Evaluation
+13  Camera Perception Lab and Installation
 14  Sampling Playground: Predictability versus Creativity
 15  Mission Control: Tool-Planning Assistant
 16  Document Detective: Answers with Evidence
 17  Story Director: Audience-Controlled Fiction
-18  Scene Memory Detective [optional camera]
-19  AI Visual Scavenger Hunt [optional camera]
-20  Camera Change Journal [optional camera]
+18  Scene Memory Detective
+19  AI Visual Scavenger Hunt
+20  Camera Change Journal
 21  Run Prepared Student Demonstrations Sequentially
 22  Prompt Design Studio
 23  Few-Shot Pattern Learner
@@ -341,6 +341,8 @@ LANGUAGE AND ASSISTANTS
 26  Prompt Injection Defense Lab
 27  Answer or Abstain: Hallucination Challenge
 28  Context Memory Challenge
+29  Socratic Study Partner
+30  Mystery Character Interview
  0  Exit
 Enter the experiment number. Ctrl+C cancels and returns here.
 '''
