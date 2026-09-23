@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 import unittest
 from unittest import mock
@@ -14,6 +15,37 @@ import demo_menu
 
 
 class ProjectTests(unittest.TestCase):
+    def test_named_project_numbers_dispatch_directly(self):
+        supervisor = mock.Mock(config=json.loads((ROOT / 'config.json').read_text()))
+        menu = demo_menu.Menu(supervisor)
+        with mock.patch.object(menu, 'showcase') as show, mock.patch.object(menu, 'camera_projects') as camera:
+            for choice, project in [('15', 'agent'), ('16', 'detective'), ('17', 'story'), ('21', 'tour')]:
+                menu.action(choice)
+                show.assert_called_with(project=project)
+            for choice, mode in [('18', 'memory'), ('19', 'hunt'), ('20', 'journal')]:
+                menu.action(choice)
+                camera.assert_called_with(mode=mode)
+        self.assertEqual(supervisor.require_free_port.call_count, 7)
+
+    def test_local_text_routes_exclude_audio_and_training(self):
+        supervisor = mock.Mock(config=json.loads((ROOT / 'config.json').read_text()))
+        menu = demo_menu.Menu(supervisor)
+        modes = {'9': 'memory', '14': 'sampling', '22': 'prompts', '23': 'fewshot',
+                 '24': 'triage', '25': 'summary', '26': 'injection', '27': 'abstain', '28': 'context'}
+        with mock.patch.object(menu, 'text_experiment') as run:
+            for choice, mode in modes.items():
+                menu.action(choice)
+                run.assert_called_with(mode)
+        self.assertNotIn('Speech', demo_menu.MENU)
+        self.assertNotIn('LoRA', demo_menu.MENU)
+
+    def test_list_command_needs_no_hardware_or_models(self):
+        result = subprocess.run(['bash', str(ROOT / 'scripts/run_demo.sh'), '--list'],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('28  Context Memory Challenge', result.stdout)
+        self.assertNotIn('Voice Assistant', result.stdout)
+
     def test_unknown_tool_not_executed(self):
         with self.assertRaises(ValueError):
             projects.call_tool('run_shell')

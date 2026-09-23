@@ -1,83 +1,22 @@
-# Nano setup walkthrough
+# Nano setup and named experiments
 
-These commands are for the **original Jetson Nano 4GB (2019), JetPack 4 / Ubuntu 18.04 / L4T R32**, using system Python 3.6. Run them in a terminal on the Nano. Git, Internet access, cooling and several GB of free disk space are required.
-
-Run each step only after the previous one succeeds. The accompanying command video is instructional; it does not show actual execution on Nano hardware.
-
-## 1. Clone
+For the original Nano 4GB, JetPack 4 / Ubuntu 18.04, system Python 3.6. Initial preparation needs Internet, sudo, cooling and disk space. Prepared inference is local.
 
 ```bash
 git clone https://github.com/nileshsarkar-ai/JetsonNano-Demo.git
 cd JetsonNano-Demo
-```
-
-If already cloned, enter the existing folder and run `git pull --ff-only` instead.
-
-After cloning, the easiest route is:
-
-```bash
 bash scripts/run_demo.sh
 ```
 
-This opens the interactive menu. Select **1** to prepare dependencies and models, then select **S → tour** for the student showcase or **C** for camera projects. `/quit` returns from chat to the menu; **0** exits the menu. The server is stopped between selections. See [the menu and rehearsal guide](DEMO-MENU.md). The manual steps below explain the underlying commands.
+Already cloned? Run `git pull --ff-only` inside that folder, then the same Bash command.
 
-## 2. Check the board
+1. Choose **1** to install/build the language runtimes and download checked models. Default setup excludes speech and training dependencies.
+2. Choose **2** to inspect board resources and dependencies.
+3. Select a [named experiment](EXPERIMENTS.md) directly. Start with **15 Mission Control**, **16 Document Detective**, or **17 Story Director**.
+4. For a camera, first select **13**, then **install**. Rehearse **13 → detect** before choosing **18 Scene Memory**, **19 Visual Scavenger Hunt**, or **20 Change Journal**. USB uses `v4l2:///dev/video0`; an appropriate CSI camera may use `csi://0`.
+5. New language demonstrations are **9**, **14**, and **22–28**. They need only the prepared language runtime.
+6. Ctrl+C cancels a supervised demo; **0** exits. Run the Bash command again to return later.
 
-```bash
-python3 --version
-python3 scripts/check_board.py --strict
-```
+The optional **21** sequence runs the original prepared text projects and tries a prepared USB camera. It does not run every experiment or replace rehearsal. Missing camera is reported and skipped.
 
-Stop if the check fails. Do not bypass it on a Mac, Orin, or unsupported OS.
-
-## 3. Install packages and build
-
-```bash
-bash scripts/install_system.sh
-JOBS=2 bash scripts/build_runtimes.sh
-```
-
-Enter the Nano's password if sudo requests it. The initial build may take a long time. If compilation exhausts memory, retry with `JOBS=1 bash scripts/build_runtimes.sh`. Keep the system Python and JetPack installation; do not install the external GPU training requirements on the Nano.
-
-## 4. Download models
-
-```bash
-python3 scripts/download.py --list
-python3 scripts/download.py smol135-q4 smol360-q4 whisper-tiny-en stories15m
-```
-
-Wait for verified downloads.
-
-## 5. Start the server in Terminal 1
-
-```bash
-python3 scripts/serve.py
-```
-
-Wait for the server to report that it is listening, then keep this terminal running.
-
-## 6. Chat in Terminal 2
-
-Replace the path below with the actual location of the cloned folder:
-
-```bash
-cd /path/to/JetsonNano-Demo
-python3 labs/chat.py
-```
-
-Enter a question. `/reset` clears history; `/quit` exits chat.
-
-After exiting chat, try:
-
-```bash
-python3 labs/calculator.py "Multiply 12 by 7."
-python3 labs/stories.py --model stories15m --tokens 128
-```
-
-Inspect the output: tiny models may make mistakes. This does not establish model accuracy.
-
-## 7. Stop and restart
-
-Press Ctrl+C in Terminal 1 to stop the server. Next time, enter the repository folder in both terminals, run `python3 scripts/serve.py` in Terminal 1, wait for readiness, and run `python3 labs/chat.py` in Terminal 2. Setup and downloads need not be repeated.
-
-Camera and training labs are separate optional steps; see the main README.
+The terminal-only video is an instructional command walkthrough, not footage of a successful Nano installation. It contains no desktop/background-window capture. Logs are in `runs/demo-*`; explicit assistant memory is in `runs/classroom-memory.json`. Use fictional classroom facts and clear them through experiment 9 when finished.

@@ -1,3 +1,5 @@
+> Menu update: use the [direct numbered experiment list](EXPERIMENTS.md). Older S/C/U shortcuts remain compatibility aliases; the main menu shows full experiment names.
+
 # Student showcase: one Nano, local AI
 
 These projects run on the original Jetson Nano 4GB / JetPack 4 / Python 3.6. **No cloud API, external GPU, microphone or speaker is required.** Internet is needed to prepare packages and model files, not for prepared text-project inference. The attached camera is optional. The terminal presents results; headless camera runs save video files instead of opening a display.
@@ -13,8 +15,8 @@ For a fresh clone, clone the repository and enter its directory first. Everythin
 
 1. **1 — Prepare** downloads/verifies the small models and builds the pinned runtimes. Do this before the class; it is not a live demo step.
 2. **2 — Report** checks available resources and installed components.
-3. **S → tour** runs the prepared offline projects automatically, then tries the optional camera journal only when `/dev/video0` and vision bindings are available. Camera failure is reported and skipped. Other failures stop the selection visibly and return to the main menu; there is no invented output or hidden replacement model.
-4. **C** opens the camera projects. For optional camera preparation, select **U → 13 → install** once, then rehearse a capture. CSI cameras may need `csi://0` instead of `v4l2:///dev/video0`; enter the correct URI when prompted. The automatic tour probes only the default `/dev/video0` path.
+3. **21 — Prepared sequence** runs the prepared offline projects automatically, then tries the optional camera journal only when `/dev/video0` and vision bindings are available. Camera failure is reported and skipped. Other failures stop the selection visibly and return to the main menu; there is no invented output or hidden replacement model.
+4. **18–20** open the camera projects. For optional camera preparation, select **13 → install** once, then rehearse a capture. CSI cameras may need `csi://0` instead of `v4l2:///dev/video0`; enter the correct URI when prompted. The automatic tour probes only the default `/dev/video0` path.
 
 ## Projects and the learning point
 
@@ -39,10 +41,12 @@ The vision process exits before the LLM is loaded, and the LLM is stopped before
 
 ## Model and presentation limits
 
-The main showcase uses pinned **SmolLM2-360M Instruct Q4**, already supported by the repository. It is approximately 258 MiB on disk; actual runtime memory is higher. It is intentionally small for the Nano's CPU and RAM. Output budgets stay short, with a 1,024-token context and one active LLM server. This is a capacity choice, **not a measured claim of Nano speed or answer quality**. The smaller legacy chat lab remains in developer utilities.
+The main showcase uses pinned **SmolLM2-360M Instruct Q4**, already supported by the repository. It is approximately 258 MiB on disk; actual runtime memory is higher. It is intentionally small for the Nano's CPU and RAM. Output budgets stay short, with a 1,024-token context and one active LLM server. This is a capacity choice, **not a measured claim of Nano speed or answer quality**. The smaller chat lab has direct menu entry 3.
 
-Software CI verifies the launcher and analysis logic under Python 3.6.15 and 3.9, using mocks/dummy processes. It does not execute models or establish camera compatibility. Before presenting, run the exact selected sequence on your board and inspect output quality and timing. If the camera is unavailable, the three text projects remain usable; microphone/speaker demos are optional utilities only.
+Software CI verifies the launcher and analysis logic under Python 3.6.15 and 3.9, using mocks/dummy processes. It does not execute models or establish camera compatibility. Before presenting, run the exact selected sequence on your board and inspect output quality and timing. If the camera is unavailable, the three text projects remain usable; audio and training demos are excluded from the active menu.
 
 ## Saved evidence
 
 Session logs, resolved base configuration and command events are under `runs/demo-*`. Camera projects also retain raw capture logs, five-frame summaries, scene histories, quest plans and scores; headless captures save MP4 files. These local demonstration records are not automatic off-machine research backups or W&B experiments. Do not use this menu as a substitute for an approved research runner.
+
+The full active programme also includes the nine local text experiments in [Named experiments](EXPERIMENTS.md).

@@ -47,11 +47,10 @@ class Menu:
     def __init__(self, supervisor):
         self.s = supervisor
         self.manifest = json.loads((ROOT / 'models.json').read_text())
-        for field in ('model', 'whisper_model'):
+        for field in ('model',):
             if self.s.config.get(field) not in self.manifest:
                 raise DemoError('config.json {} must name a model in models.json.'.format(field))
-        required = ('audio_device', 'tts_voice', 'tts_words_per_minute', 'record_seconds',
-                    'max_tokens', 'temperature', 'top_p', 'top_k', 'seed', 'timeout_seconds',
+        required = ('max_tokens', 'temperature', 'top_p', 'top_k', 'seed', 'timeout_seconds',
                     'context', 'batch', 'threads')
         missing = [key for key in required if key not in self.s.config]
         if missing:
@@ -94,26 +93,26 @@ class Menu:
         print('Preparation needs Internet and sudo. It can take a long time; do this before the event.')
         self.s.run(['bash', 'scripts/install_system.sh'], monitor=False, terminal=True)
         self.s.run(['env', 'JOBS=' + jobs, 'bash', 'scripts/build_runtimes.sh'], timeout=14400)
-        self.py('scripts/download.py', self.s.config['model'], self.s.config['whisper_model'],
+        self.py('scripts/download.py', self.s.config['model'],
                 'stories15m', 'smol360-q4', timeout=7200)
-        print('Core preparation completed. Select 2, then S > tour. Optional camera setup is under U > 13 > install.')
+        print('Core preparation completed. Select 2, then an experiment number (15–20). Optional camera setup: 13 > install.')
 
     def status(self):
         self.py('scripts/check_board.py', '--strict', monitor=False)
         print('Available RAM: {} MiB; highest reported temperature: {} C'.format(available_memory(), temperature()))
         print('Free disk: {:.1f} GiB'.format(shutil.disk_usage(str(ROOT)).free / 1024 ** 3))
-        for key in (self.s.config['model'], 'smol360-q4', self.s.config['whisper_model'], 'stories15m'):
+        for key in (self.s.config['model'], 'smol360-q4', 'stories15m'):
             path = ROOT / 'models' / self.manifest[key]['file']
             print('{}: {}'.format(key, 'present (hash checked before use)' if path.is_file() else 'MISSING'))
         for relative in ('.vendor/llama.cpp/build/bin/llama-server', '.vendor/llama.cpp/build/bin/llama-bench',
-                         '.vendor/llama2.c/run', '.vendor/whisper.cpp/build/bin/main'):
+                         '.vendor/llama2.c/run'):
             print('{}: {}'.format(relative, 'ready' if os.access(str(ROOT / relative), os.X_OK) else 'MISSING'))
-        for name in ('ffmpeg', 'arecord', 'espeak-ng'):
+        for name in ('ffmpeg',):
             print('{}: {}'.format(name, shutil.which(name) or 'MISSING'))
-        for module in ('jetson_inference', 'jetson_utils', 'torch'):
+        for module in ('jetson_inference', 'jetson_utils'):
             print('{}: {}'.format(module, 'installed (not hardware-validated)' if importlib.util.find_spec(module) else 'optional / missing'))
         print('Logs:', self.s.session)
-        print('Power, camera, microphone, thermals and model quality still need an on-board rehearsal.')
+        print('Power, camera, thermals and model quality still need an on-board rehearsal.')
 
     def rag(self):
         mode = prompt('RAG: index / retrieve / ask', 'retrieve')
@@ -135,30 +134,6 @@ class Menu:
         else:
             raise DemoError('Unknown RAG mode.')
 
-    def speech(self):
-        mode = prompt('Speech: say / transcribe / assistant', 'say')
-        if mode == 'say':
-            if not shutil.which('espeak-ng'):
-                raise DemoError('eSpeak NG missing. Run core setup.')
-            self.py('labs/speech.py', 'say', prompt('Text', 'Hello from the Jetson Nano.'))
-        elif mode in ('transcribe', 'assistant'):
-            self.need_binary('.vendor/whisper.cpp/build/bin/main')
-            self.model(self.s.config['whisper_model'])
-            if not shutil.which('ffmpeg'):
-                raise DemoError('ffmpeg missing. Run core setup.')
-            if mode == 'transcribe':
-                audio = file_prompt('Audio file')
-                self.py('labs/speech.py', 'transcribe', audio)
-            else:
-                if not shutil.which('arecord'):
-                    raise DemoError('arecord missing. Run core setup.')
-                self.s.run(['arecord', '-L'], monitor=False)
-                device = prompt('ALSA capture device', self.s.config['audio_device'])
-                self.llm()
-                self.py('labs/speech.py', 'assistant', '--device', device, '--seconds', '5', timeout=0)
-        else:
-            raise DemoError('Unknown speech mode.')
-
     def vision(self):
         mode = prompt('Vision: install / detect / classify / pose / segment', 'detect')
         if mode == 'install':
@@ -178,27 +153,8 @@ class Menu:
         output = prompt('Output URI (use a file path on headless boards)', 'display://0' if os.environ.get('DISPLAY') else str(self.s.session / ('vision-{}.mp4'.format(self.s.counter + 1))))
         frames = number('Maximum frames', 300, 1, 3000)
         args = ['--frames', frames]
-        if mode == 'detect' and prompt('Speak detected labels? y/n', 'n') == 'y':
-            args.append('--speak')
         print('First model load may download weights and compile a TensorRT engine. Rehearse beforehand.')
         self.py('labs/vision.py', mode, source, output, *args, timeout=1800)
-
-    def training(self):
-        if importlib.util.find_spec('torch') is None:
-            raise DemoError('Optional matching JetPack PyTorch wheel required. See docs/TRAINING.md; do not pip-upgrade Python.')
-        mode = prompt('Tiny LoRA: base / adapt / generate', 'generate')
-        args = []
-        if mode not in ('base', 'adapt', 'generate'):
-            raise DemoError('Unknown training mode.')
-        if mode != 'base':
-            print('Load only a trusted checkpoint you created.')
-            args += ['--checkpoint', file_prompt('Checkpoint')]
-        if mode == 'generate':
-            args += ['--prompt', prompt('Prompt (characters must exist in the base vocabulary)'), '--tokens', '64']
-        else:
-            args += ['--text', file_prompt('UTF-8 corpus'), '--steps', number('Steps', 50, 1, 500),
-                     '--batch-size', '1', '--output', str(self.s.session / ('tiny-{}.pt'.format(self.s.counter + 1)))]
-        self.py('training/tiny_lora.py', mode, '--device', 'cpu', *args, timeout=1800)
 
     def capture_snapshot(self, source):
         if any(importlib.util.find_spec(x) is None for x in ('jetson_inference', 'jetson_utils')):
@@ -214,11 +170,11 @@ class Menu:
         print('Stable multi-frame observation:', json.dumps(snapshot['objects']), flush=True)
         return snapshot
 
-    def camera_projects(self, automatic=False):
+    def camera_projects(self, automatic=False, mode=None):
         print('\nCAMERA PROJECTS: memory / hunt / journal')
         print('memory: compare before/after; hunt: AI-planned visual challenge; journal: a three-observation scene history.')
         print('Keep the camera fixed. Prepare a cup, bottle, book or phone; no face identification is used.')
-        mode = 'journal' if automatic else prompt('Camera project', 'memory').lower()
+        mode = mode or ('journal' if automatic else prompt('Camera project', 'memory').lower())
         if mode not in ('memory', 'hunt', 'journal'):
             raise DemoError('Choose memory, hunt or journal.')
         source = 'v4l2:///dev/video0' if automatic else prompt('Camera URI', 'v4l2:///dev/video0')
@@ -259,9 +215,15 @@ class Menu:
         self.llm('smol360-q4')
         self.py('labs/camera_tasks.py', 'explain', str(path))
 
-    def showcase(self):
-        print('\nSHOWCASE PROJECTS — small local LLM, no cloud calls after preparation\n tour       Automatic tour: multi-tool agent -> document detective -> story director (+ optional camera)\n agent      Mission control: an LLM plans tools, executes them, and combines evidence\n detective  Ask the bundled fictional exhibit brief, with visible evidence\n story      Interactive story director: choose a scene and add a twist\n camera     Scene-memory detective, AI scavenger hunt, workspace change journal\n')
-        project = prompt('Choose project', 'tour').lower()
+    def showcase(self, project=None):
+        if project is None:
+            print('Choose agent (Mission Control), detective (Document Detective), story (Story Director), camera, or tour (prepared sequence).')
+        else:
+            print('Starting:', {'agent': 'Mission Control: Tool-Planning Assistant',
+                  'detective': 'Document Detective: Answers with Evidence',
+                  'story': 'Story Director: Audience-Controlled Fiction',
+                  'tour': 'Prepared Student Demonstrations'}.get(project, project))
+        project = project or prompt('Choose project', 'tour').lower()
         if project == 'camera':
             self.camera_projects()
             return
@@ -293,12 +255,30 @@ class Menu:
                 args = ['--question', question]
             self.py('labs/projects.py', project, *args, timeout=0 if project == 'story' else 900)
 
+    def text_experiment(self, mode):
+        self.llm('smol360-q4')
+        self.py('labs/text_experiments.py', mode, '--output',
+                str(self.s.session / ('text-experiment-{}.jsonl'.format(self.s.counter + 1))), timeout=1200)
+
     def action(self, choice):
-        if choice.lower() in ('s', 'c', 't', 'u') or choice in [str(x) for x in range(3, 15)]:
+        text_modes = {'9': 'memory', '14': 'sampling', '22': 'prompts', '23': 'fewshot',
+                      '24': 'triage', '25': 'summary', '26': 'injection', '27': 'abstain', '28': 'context'}
+        if choice in text_modes:
+            self.s.require_free_port()
+            self.text_experiment(text_modes[choice])
+            return
+        if choice in ('15', '16', '17', '18', '19', '20', '21'):
+            self.s.require_free_port()
+            if choice in ('18', '19', '20'):
+                self.camera_projects(mode={'18': 'memory', '19': 'hunt', '20': 'journal'}[choice])
+            else:
+                self.showcase(project={'15': 'agent', '16': 'detective', '17': 'story', '21': 'tour'}[choice])
+            return
+        if choice.lower() in ('s', 'c', 'u') or choice in [str(x) for x in range(3, 15)]:
             self.s.require_free_port()
         if choice.lower() == 'c': self.camera_projects()
         elif choice.lower() == 'u':
-            print('3 chat; 4 question; 5 tokens; 6 extraction; 7 calculator; 8 RAG; 9 speech; 10 stories; 11 benchmark; 12 evaluation; 13 vision setup; 14 tiny LoRA')
+            print('3 chat; 4 question; 5 tokens; 6 extraction; 7 calculator; 8 RAG; 9 persistent memory; 10 stories; 11 benchmark; 12 evaluation; 13 vision setup; 14 sampling')
             self.action(number('Utility', 13, 3, 14))
         elif choice.lower() == 's': self.showcase()
         elif choice == '1': self.setup()
@@ -312,7 +292,6 @@ class Menu:
             if choice == '4': self.py('labs/chat.py', '--prompt', text, '--max-tokens', '64')
             else: self.py({'5': 'labs/inspect_tokens.py', '6': 'labs/extract.py', '7': 'labs/calculator.py'}[choice], text)
         elif choice == '8': self.rag()
-        elif choice == '9': self.speech()
         elif choice == '10':
             self.need_binary('.vendor/llama2.c/run')
             self.model('stories15m')
@@ -327,29 +306,56 @@ class Menu:
             self.llm()
             self.py('labs/evaluate.py', dataset, '--output', str(self.s.session / ('evaluation-{}.jsonl'.format(self.s.counter + 1))), timeout=3600)
         elif choice == '13': self.vision()
-        elif choice == '14': self.training()
         else: raise DemoError('Choose a number or letter shown in the menu.')
 
 
 MENU = '''
-JETSON NANO — OFFLINE AI PROJECTS
- 1  Prepare models and core dependencies (before the event)
- 2  Board / dependency / resource report
- S  Offline AI projects + automatic tour
- C  Camera projects: scene memory, visual quests, change journal
- U  Developer utilities / optional vision and PyTorch labs
+JETSON NANO — NAMED EXPERIMENTS
+SETUP
+ 1  Prepare core dependencies and models
+ 2  Board health and dependency report
+LANGUAGE AND ASSISTANTS
+ 3  Offline Conversation Assistant
+ 4  Ask the Local Language Model
+ 5  Tokenization Microscope
+ 6  Structured Information Extraction
+ 7  Calculator Tool Assistant
+ 8  Class Notes Retrieval and Grounded Answers
+ 9  Persistent Memory Assistant
+10  TinyStories Generator
+11  Language Model Performance Benchmark
+12  Reproducible Prompt Evaluation [provide a JSONL dataset]
+13  Camera Perception Lab and Installation [optional camera]
+14  Sampling Playground: Predictability versus Creativity
+15  Mission Control: Tool-Planning Assistant
+16  Document Detective: Answers with Evidence
+17  Story Director: Audience-Controlled Fiction
+18  Scene Memory Detective [optional camera]
+19  AI Visual Scavenger Hunt [optional camera]
+20  Camera Change Journal [optional camera]
+21  Run Prepared Student Demonstrations Sequentially
+22  Prompt Design Studio
+23  Few-Shot Pattern Learner
+24  Message Triage Desk: Validated JSON Routing
+25  Summary Fact Checker
+26  Prompt Injection Defense Lab
+27  Answer or Abstain: Hallucination Challenge
+28  Context Memory Challenge
  0  Exit
-Ctrl+C cancels a project and returns here. Projects run sequentially.
-Use S -> tour for the prepared automatic sequence; camera is optional.
+Enter the experiment number. Ctrl+C cancels and returns here.
 '''
 
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--list', action='store_true', help='List named experiments without starting hardware or models')
     parser.add_argument('--setup-only', action='store_true', help='Prepare core dependencies and exit')
     parser.add_argument('--check', action='store_true', help='Read-only board report, no demos')
     args = parser.parse_args()
+    if args.list:
+        print(MENU)
+        return
     if sys.version_info < (3, 6):
         raise SystemExit('Python 3.6 or newer is required; keep JetPack system Python.')
     os.chdir(str(ROOT))

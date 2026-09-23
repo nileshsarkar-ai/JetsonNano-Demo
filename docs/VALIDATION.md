@@ -1,83 +1,11 @@
-# Nano setup walkthrough
+# Validation status
 
-These commands are for the **original Jetson Nano 4GB (2019), JetPack 4 / Ubuntu 18.04 / L4T R32**, using system Python 3.6. Run them in a terminal on the Nano. Git, Internet access, cooling and several GB of free disk space are required.
+The active scope is original Nano 4GB, JetPack 4 / Ubuntu 18.04, Python 3.6, optional camera. No physical Nano is connected in this development workspace.
 
-Run each step only after the previous one succeeds. The accompanying command video is instructional; it does not show actual execution on Nano hardware.
+The earlier code commit `f20fed1` passed 43 software regression tests on Python 3.6.15 and 3.9 in [CI](https://github.com/nileshsarkar-ai/JetsonNano-Demo/actions/runs/35878438927). The named-menu update passes 53 software tests locally, including route and local-text-experiment tests. These use mocked model responses and dummy child processes; no real inference, training or measured hardware experiments are part of the software tests.
 
-## 1. Clone
+Software checks cover input validation, bounded memory storage, actual-summary propagation, model-error propagation, sampling settings, per-condition logs, direct named routing, camera evidence rules, cancellation, process cleanup, timeout/resource checks and source checkout recovery. Bash syntax is checked separately.
 
-```bash
-git clone https://github.com/nileshsarkar-ai/JetsonNano-Demo.git
-cd JetsonNano-Demo
-```
+Unverified on the physical board: package installation, pinned runtime compilation, TensorRT engines, camera capture, model quality, latency, temperatures and peak RAM. Resource monitoring reduces risk but cannot guarantee recovery from instantaneous OOM, power loss, kernel failure or an incompatible driver. Rehearse the exact selected demos on the board before presenting.
 
-If already cloned, enter the existing folder and run `git pull --ff-only` instead.
-
-After cloning, the easiest route is:
-
-```bash
-bash scripts/run_demo.sh
-```
-
-This opens the interactive menu. Select **1** to prepare dependencies and models, then select **S → tour** for the student showcase or **C** for camera projects. `/quit` returns from chat to the menu; **0** exits the menu. The server is stopped between selections. See [the menu and rehearsal guide](DEMO-MENU.md). The manual steps below explain the underlying commands.
-
-## 2. Check the board
-
-```bash
-python3 --version
-python3 scripts/check_board.py --strict
-```
-
-Stop if the check fails. Do not bypass it on a Mac, Orin, or unsupported OS.
-
-## 3. Install packages and build
-
-```bash
-bash scripts/install_system.sh
-JOBS=2 bash scripts/build_runtimes.sh
-```
-
-Enter the Nano's password if sudo requests it. The initial build may take a long time. If compilation exhausts memory, retry with `JOBS=1 bash scripts/build_runtimes.sh`. Keep the system Python and JetPack installation; do not install the external GPU training requirements on the Nano.
-
-## 4. Download models
-
-```bash
-python3 scripts/download.py --list
-python3 scripts/download.py smol135-q4 whisper-tiny-en stories15m
-```
-
-Wait for verified downloads.
-
-## 5. Start the server in Terminal 1
-
-```bash
-python3 scripts/serve.py
-```
-
-Wait for the server to report that it is listening, then keep this terminal running.
-
-## 6. Chat in Terminal 2
-
-Replace the path below with the actual location of the cloned folder:
-
-```bash
-cd /path/to/JetsonNano-Demo
-python3 labs/chat.py
-```
-
-Enter a question. `/reset` clears history; `/quit` exits chat.
-
-After exiting chat, try:
-
-```bash
-python3 labs/calculator.py "Multiply 12 by 7."
-python3 labs/stories.py --model stories15m --tokens 128
-```
-
-Inspect the output: tiny models may make mistakes. This does not establish model accuracy.
-
-## 7. Stop and restart
-
-Press Ctrl+C in Terminal 1 to stop the server. Next time, enter the repository folder in both terminals, run `python3 scripts/serve.py` in Terminal 1, wait for readiness, and run `python3 labs/chat.py` in Terminal 2. Setup and downloads need not be repeated.
-
-Camera and training labs are separate optional steps; see the main README.
+The updated command video is generated from terminal text only and decoded fully to check its media stream. It is instructional, not fabricated Nano execution.

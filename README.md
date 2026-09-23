@@ -2,7 +2,7 @@
 
 Runnable teaching code for the **original Jetson Nano 4GB (2019)** on **JetPack 4 / Ubuntu 18.04**. The board scripts use **Python 3.6+ and its standard library**. The default inference path uses native **CPU-only** C/C++ runtimes.
 
-The student showcase includes an LLM tool-planning assistant, a document detective, an interactive story director, and camera projects for scene memory, visual scavenger hunts and change journals. Projects run sequentially on the Nano, with short local-model outputs and an optional camera. Individual language, speech, vision and training labs remain under developer utilities. External-GPU QLoRA is a separate workflow, not a Nano demo. See [the showcase guide](docs/SHOWCASE.md).
+The student showcase includes an LLM tool-planning assistant, a document detective, an interactive story director, and camera projects for scene memory, visual scavenger hunts and change journals. Projects run sequentially on the Nano, with short local-model outputs and an optional camera. The active menu requires only the Nano and optional camera. Historical audio and training code remains in the repository for reference but is excluded from the menu and default setup. See [the showcase guide](docs/SHOWCASE.md).
 
 **Validation boundary:** the pinned runtimes and real small models were exercised on the development Mac (ARM64 CPU). This is not a claim of testing on a physical Nano. See [docs/VALIDATION.md](docs/VALIDATION.md) for actual checks and remaining board checks.
 
@@ -18,13 +18,13 @@ bash scripts/run_demo.sh
 
 Already cloned? Run `git pull --ff-only` inside the repository, then `bash scripts/run_demo.sh`.
 
-The command opens a student-facing project menu. Choose **1** to prepare before class, then **S → tour** for the automatic sequence: an LLM tool-planning assistant, a local-document detective, and an interactive story director. **C** offers scene-memory comparison, an AI-planned visual scavenger hunt, and a camera change journal. Optional camera failure is reported and skipped in the tour. Calculators, benchmarks and other low-level labs are under **U — Developer utilities**.
+The command opens a numbered experiment list with full names. Choose **1** to prepare before class, then select **15 Mission Control**, **16 Document Detective**, **17 Story Director**, **18 Scene Memory Detective**, **19 AI Visual Scavenger Hunt**, or **20 Camera Change Journal**. Earlier labs remain directly available as **3–14**, including **9 Persistent Memory Assistant** and **14 Sampling Playground**. **21** runs the prepared demonstrations sequentially and skips an unavailable optional camera. [Full experiment list](docs/EXPERIMENTS.md).
 
 Prepared text projects need only the Nano: no external GPU, paid API, microphone or speaker. The showcase uses pinned SmolLM2-360M Q4 with short outputs; no real-time speed claim is made. Camera processing and LLM generation run sequentially to avoid loading both at once. The launcher includes memory/disk/thermal checks, timeouts, server cleanup and session logs. These reduce risk but do not replace a real-board rehearsal.
 
 [Showcase projects and student sequence](docs/SHOWCASE.md) · [Menu safeguards](docs/DEMO-MENU.md) · [Setup commands](docs/SETUP-WALKTHROUGH.md) · [Walkthrough video](docs/media/jetson-nano-setup.mp4)
 
-The sections below describe the individual commands for manual use.
+The sections below retain the original manual reference. Speech and training sections are historical optional workflows outside the current Nano-and-camera presentation. For the active demo list, use [Named experiments](docs/EXPERIMENTS.md).
 
 ## 1. Copy the code to the Nano
 
@@ -48,7 +48,7 @@ Setup fetches pinned runtime sources when they are not already cached locally. M
 
 ```bash
 python3 scripts/download.py --list
-python3 scripts/download.py smol135-q4 smol360-q4 whisper-tiny-en stories15m
+python3 scripts/download.py smol135-q4 smol360-q4 stories15m
 ```
 
 Downloads use **exact Hugging Face revisions and SHA-256 checksums** in `models.json`. Partial downloads never replace verified files. Transient network failures retry at most three times. Checksum errors fail visibly; there are no hidden fallback models.
@@ -206,3 +206,7 @@ Original project code is MIT licensed; see [LICENSE](LICENSE). Downloaded runtim
 ## Presentation coverage
 
 The included PPT is a 72-topic idea catalogue. See [the checked presentation-to-code coverage guide](docs/CATALOGUE-COVERAGE.md) for all original menu entries, the six new projects, and topics that do not yet have implementations.
+
+Current classroom presentation: [Nano Local AI Experiments](docs/Jetson_Nano_Local_AI_Experiments.pptx). The earlier 72-topic catalogue is an archived ideas reference, not the active demo programme.
+
+Historical speech setup is now explicit opt-in: `WITH_AUDIO=1 bash scripts/install_system.sh`, `WITH_AUDIO=1 bash scripts/build_runtimes.sh`, then `python3 scripts/download.py whisper-tiny-en`. This is outside the current classroom scope.
