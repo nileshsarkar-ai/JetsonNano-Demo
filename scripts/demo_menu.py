@@ -376,8 +376,11 @@ class CompactMenu(Menu):
                 raise DemoError('Text runtime needs building. Free at least 6 GiB first; use --storage. Existing working runtimes need no rebuild.')
             self.s.run(['bash', 'scripts/install_system.sh'], monitor=False, terminal=True)
             self.s.run(['env', 'JOBS=1', 'BUILD_MINIMAL=1', 'bash', 'scripts/build_runtimes.sh'], timeout=14400)
+        else:
+            print('[READY] Text runtime exists; skipping build.')
+        print('[CHECK] Text model checksum (cached files need no download).')
         self.py('scripts/download.py', 'smol360-q4', timeout=7200)
-        print('Text model ready: SmolLM2-360M Q4 (258 MiB).')
+        print('[READY] Text model ready: SmolLM2-360M Q4 (258 MiB).')
 
     def prepare_vision(self):
         resource_check(start=True)
@@ -397,14 +400,19 @@ class CompactMenu(Menu):
             if shutil.disk_usage(str(ROOT)).free < 1024 ** 3:
                 raise DemoError('Camera model preparation needs at least 1 GiB free headroom.')
             self.s.run([executable, 'labs/vision.py', 'detect', '--prepare'], timeout=3600)
-        print('Object detector prepared.')
+        else:
+            print('[READY] Detector preparation receipt and cached files match; skipping model preparation.')
+        print('[READY] Object detector prepared.')
 
     def setup(self):
+        print('Setup checklist: verify existing files, prepare only missing steps.')
         self.setup_text()
         try:
             self.prepare_vision()
+            camera = detect_camera()
+            print('[READY] Camera: ' + camera if camera else '[PENDING] No responding camera; text is ready.')
         except DemoError as error:
-            print('Text ready; camera preparation incomplete:', error)
+            print('[PENDING] Text ready; camera preparation incomplete:', error)
 
     def action(self, choice):
         if choice == '1':

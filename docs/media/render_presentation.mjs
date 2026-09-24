@@ -28,17 +28,20 @@ lines.forEach((line,i)=>text(s,line,76,235+i*62,1135,50,i===0?24:28,i===5?green:
 }
 {
 const s=page('Text Conversation','Menu 3','');
-text(s,'SmolLM2-360M Instruct',75,235,1100,65,38,ink,true);
-text(s,'Ask a question, then follow up using the same conversation.',78,326,1085,90,31,muted);
-text(s,'Example prompt',78,444,1050,45,24,green,true);
-text(s,'“Explain why a boat floats. Then explain it to a ten-year-old.”',78,495,1090,90,30,ink);
-text(s,'/reset clears the conversation.  /quit returns to the menu.',78,610,1090,42,23,muted);
+text(s,'“Why does a steel ship float?”',78,225,1110,100,49,ink,true);
+text(s,'Follow-up prompts',80,370,1060,45,24,green,true);
+text(s,'“Explain it using an everyday analogy.”\n“Now explain it in two sentences.”',80,425,1090,130,34,ink);
+text(s,'SmolLM2-360M Instruct uses the preceding conversation.',80,576,1090,45,25,muted);
+text(s,'/reset clears history.  /quit returns to the menu.',80,627,1090,38,23,muted);
 }
 {
 const s=page('Camera Object Detection','Menu 4','');
-text(s,'SSD-Mobilenet-v2',75,235,1100,65,38,ink,true);
-text(s,'Place a cup, bottle or book in view.\nThe detector labels objects and draws their bounding boxes.',78,332,1090,130,31,muted);
-text(s,'Move an object and observe the changing detections.',78,510,1090,85,30,ink);
+text(s,'SSD-Mobilenet-v2',75,230,490,65,34,ink,true);
+text(s,'Place everyday objects\nin the camera’s view.',78,328,490,95,31,muted);
+text(s,'Move one object.\nTurn the book sideways.\nPartly hide the cup.',78,469,490,130,30,ink);
+s.images.add({blob:new Uint8Array(await fs.readFile(new URL('./tabletop-scene.png',import.meta.url))),contentType:'image/png',fit:'contain',alt:'Illustrative tabletop with cup, bottle and book',position:{left:575,top:220,width:650,height:430}});
+text(s,'Illustrative scene',815,647,390,32,19,muted);
+s.speakerNotes.textFrame.setText('AI-generated illustrative scene, not a camera capture or measured detection result. Detection labels and bounding boxes come from labs/vision.py during live execution. Ask students which objects remain detectable after rotation or partial occlusion; no accuracy outcome is predetermined.');
 }
 {
 const s=page('Camera-Guided Object Hunt','Menu 5','');
@@ -62,5 +65,5 @@ rows.forEach((row,i)=>{text(s,row[0],80,205+i*67,225,50,29,green,true);text(s,ro
 text(s,'Ctrl+C cancels a demo and returns to the menu.',80,625,1090,42,24,muted);
 }
 const draft=root+'/candidate.pptx';await(await PresentationFile.exportPptx(p)).save(draft);
-const result=await finalizePresentation({workspaceDir:root,candidatePath:draft,finalPath:root+'/output/Jetson_Nano_Three_Demos.pptx',pythonExecutable:process.env.RUNTIME_PYTHON,integrityValidatorPath:skill+'/container_tools/inspect_presentation_package_integrity.py',layoutValidatorPath:skill+'/container_tools/inspect_presentation_layout_geometry.py',layoutArgs:['--expected-slide-size-emu','12192000,6858000','--validate-heading-fit'],requiredNativeTableOwnerSlides:[],fontPolicy:{basis:'design',families:[font,'Courier New']},explicitTotalSlideCount:7,verifyArtifactToolImport:true,receiptPath:root+'/validation.json'});
+const result=await finalizePresentation({workspaceDir:root,candidatePath:draft,finalPath:root+'/output/Jetson_Nano_Visual_Demos.pptx',pythonExecutable:process.env.RUNTIME_PYTHON,integrityValidatorPath:skill+'/container_tools/inspect_presentation_package_integrity.py',layoutValidatorPath:skill+'/container_tools/inspect_presentation_layout_geometry.py',layoutArgs:['--expected-slide-size-emu','12192000,6858000','--validate-heading-fit'],requiredNativeTableOwnerSlides:[],fontPolicy:{basis:'design',families:[font,'Courier New']},explicitTotalSlideCount:7,verifyArtifactToolImport:true,receiptPath:root+'/validation.json'});
 console.log(JSON.stringify(result));

@@ -10,13 +10,22 @@ cd JetsonNano-Demo
 bash scripts/run_demo.sh
 ```
 
-Already cloned:
+Already cloned with Git (a folder containing `.git`):
 
 ```bash
 cd JetsonNano-Demo
 git pull --ff-only
 bash scripts/run_demo.sh
 ```
+
+Downloaded **Code > Download ZIP** instead? ZIP folders have no Git history, so `git pull --ff-only` cannot update them. From your extracted folder, use:
+
+```bash
+curl -fL https://raw.githubusercontent.com/nileshsarkar-ai/JetsonNano-Demo/master/scripts/update_zip.py -o /tmp/jetson-update.py
+python3 /tmp/jetson-update.py --root "$PWD"
+```
+
+Close the demo menu/setup before updating. The updater backs up replaced source files under `runs/source-backup-*` and preserves models, runtime builds, logs and existing `config.json`. It leaves unlisted old files in place. Later ZIP updates can use `python3 scripts/update_zip.py`. This does not convert the folder into a Git checkout.
 
 The Bash command selects Python, checks the board and opens this menu:
 
@@ -138,3 +147,5 @@ bash scripts/run_demo.sh --ppt
 ```
 
 On the Nano desktop this launches an installed LibreOffice/Impress in slideshow mode. If LibreOffice is absent, it asks the desktop to open the bundled PDF. A viewer must already be installed; the command does not download office software. An SSH session without a graphical display prints the file location instead. The PPTX and PDF both describe only the three default demos.
+
+Rerun `bash scripts/run_demo.sh --setup-only` as a checklist. Existing text runtime files skip compilation, cached text weights undergo SHA-256 verification without downloading, and matching camera preparation receipts skip model preparation. The script still checks native imports and camera response. Missing assets trigger the corresponding preparation step. Old log messages alone do not mark missing files as ready.

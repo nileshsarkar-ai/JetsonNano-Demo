@@ -111,3 +111,11 @@ class InventoryTests(unittest.TestCase):
                 s.file_inventory(tmp, seconds=2)
             self.assertIn(str(path), output.getvalue())
             self.assertIn('1 unique files', output.getvalue())
+
+class RepeatedSetupTests(unittest.TestCase):
+    def test_prepared_detector_skips_build_and_model_load(self):
+        view = m.CompactMenu(mock.Mock(config=json.loads((m.ROOT / 'config.json').read_text())))
+        with mock.patch.object(m, 'resource_check'), mock.patch.object(m, 'vision_python', return_value='/usr/bin/python3'):
+            with mock.patch.object(m, 'vision_ready', return_value=True), mock.patch.object(m.shutil, 'which', return_value='/usr/bin/tool'):
+                view.prepare_vision()
+        view.s.run.assert_not_called()
