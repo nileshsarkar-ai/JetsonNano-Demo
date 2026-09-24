@@ -92,3 +92,22 @@ class CompactTests(unittest.TestCase):
         with mock.patch.object(view, 'setup_text') as text, mock.patch.object(view, 'prepare_vision', side_effect=m.DemoError('needs space')):
             view.setup()
             text.assert_called_once_with()
+
+class InventoryTests(unittest.TestCase):
+    def test_models_caches_and_code_classified(self):
+        import storage_report as s
+        self.assertEqual(s.category('/home/u/model.gguf'), 'AI model/checkpoint candidates')
+        self.assertEqual(s.category('/home/u/.cache/pip/blob'), 'Caches')
+        self.assertEqual(s.category('/home/u/repo/main.py'), 'Code and Git data')
+
+    def test_inventory_reports_large_files_without_reading_contents(self):
+        import storage_report as s
+        import io
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'sample.gguf'
+            path.write_bytes(b'fixture')
+            output = io.StringIO()
+            with mock.patch('sys.stdout', output):
+                s.file_inventory(tmp, seconds=2)
+            self.assertIn(str(path), output.getvalue())
+            self.assertIn('1 unique files', output.getvalue())

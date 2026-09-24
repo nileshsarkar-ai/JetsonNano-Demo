@@ -226,8 +226,18 @@ Camera preparation loads each network to download its weights and build its devi
 
 ### Two Python commands and limited storage
 
-On the reported board, `python` is 3.11.3 and `python3` is 3.6.9. The Bash launcher intentionally invokes `python3`, preserving JetPack's system environment. Both versions are included in software CI. No symlink changes or Python upgrades are needed.
+On the reported board, `python` is 3.11.3 and `python3` is 3.6.9. The Bash launcher now prefers an installed Python 3.11 (`python3.11`, then `python`, then `python3` if it is 3.11), and falls back to `python3`. It never changes system symlinks. Camera bindings run separately in whichever checked interpreter can import them. Both versions are included in software CI. No symlink changes or Python upgrades are needed.
 
 With only about 4 GB free, do not start full setup. Run `bash scripts/run_demo.sh --storage` for a read-only filesystem, partition and directory-size report; run `bash scripts/run_demo.sh --check` for OS/L4T/Python details. Storage scans may be partial where permissions prevent access. Nothing is deleted automatically. Full setup checks for at least 6 GiB free before installation and checks again before camera preparation; this is a minimum headroom check, not a guarantee of total build size. Preserve other users' files and the JetPack installation.
 
 Compact preparation reuses an existing server and downloads only its selected text model. A fresh runtime or camera-library build retains the 6 GiB safety gate; installed camera bindings need at least 1 GiB free to prepare the detector. With 4 GB free, first inspect `--storage` and `--check`; do not assume the presence of Python means the AI runtimes are installed. The storage report lists existing `.gguf`, `.onnx`, `.engine` and `.safetensors` files in your home/repository, subject to permissions and a timeout. It never deletes, loads, moves or trusts unknown models. Models belonging to others are not automatically reused.
+
+### Automatic interpreter and configuration detection
+
+`bash scripts/run_demo.sh` prefers the installed Python 3.11 for the menu and text clients. It checks essential standard-library modules before starting. To explicitly use JetPack Python: `DEMO_PYTHON=/usr/bin/python3 bash scripts/run_demo.sh`. `--check` reports interpreter paths/versions, OS, L4T, CUDA/TensorRT packages, power mode, swap, memory, disk, models and camera readiness. Detection does not change clocks, power mode, swap or system Python.
+
+Use menu **1** for automatic dependency/model preparation, or `bash scripts/run_demo.sh --setup-only`. Missing native runtimes are built sequentially when storage permits; existing verified text weights are reused. Setup needs Internet only for missing packages/sources/models. A skipped camera preparation is printed explicitly; it does not mean all three demos are ready.
+
+**Storage Analyzer:** choose **6** in the compact menu, or run `bash scripts/run_demo.sh --storage`. It reports used/free space, partitions and inode usage; lists large accessible directories in descending size order; and searches for existing model files. A nominal 32 GB card is about 29.8 GiB before filesystem overhead. Timed-out or permission-denied scans are marked incomplete. No cleanup is automatic.
+
+The analyzer also groups allocated file space into model candidates, installed software/libraries, code/Git data, caches, logs, media and other files. It lists the 30 largest individual files and system packages. The bounded root-filesystem scan reads metadata only, counts hardlinks once, avoids other mounts/symlinks and reports inaccessible paths or timeouts. Categories are filename/path heuristics; package figures overlap with file totals and must not be added to them.

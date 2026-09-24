@@ -359,6 +359,7 @@ JETSON NANO
  3  Text Conversation
  4  Camera Object Detection
  5  Camera-Guided Object Hunt
+ 6  Storage Analyzer
  0  Exit
 Ctrl+C cancels and returns here.
 """
@@ -421,11 +422,13 @@ class CompactMenu(Menu):
             source = self.camera_source()
             output = 'display://0' if os.environ.get('DISPLAY') else str(self.s.session / 'detection.mp4')
             self.s.run([executable, 'labs/vision.py', 'detect', source, output, '--frames', '300'], timeout=1800)
+        elif choice == '6':
+            self.py('scripts/storage_report.py', timeout=600, monitor=False)
         elif choice == '5':
             self.setup_text()
             self.camera_projects(mode='hunt')
         else:
-            raise DemoError('Choose 0–5 from this menu.')
+            raise DemoError('Choose 0–6 from this menu.')
 
 
 MENU = '''
