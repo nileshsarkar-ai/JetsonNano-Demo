@@ -3,10 +3,12 @@ import base64
 import binascii
 import json
 import os
+import re
 import threading
 import subprocess
 import sys
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -55,12 +57,16 @@ class Handler(BaseHTTPRequestHandler):
                 if not isinstance(msg, dict): raise ValueError()
                 if msg.get('role') not in ('user','assistant') or not isinstance(msg.get('content'),str): raise ValueError()
                 messages.append({'role':msg['role'],'content':msg['content'][:6000]})
+            now = datetime.now(ZoneInfo('Asia/Kolkata'))
+            messages[0]['content'] += ' Current date and time in India (Asia/Kolkata): ' + now.strftime('%A, %d %B %Y, %H:%M %Z') + '. Use this clock for date/day questions; do not say you lack the current date. Web search is available for current questions; use the search evidence provided and do not claim you have no internet capability.'
+            latest_question = next((m['content'] for m in reversed(messages) if m['role'] == 'user'), '')
+            automatic_web = bool(re.search(r'\b(latest|news|headlines|current|recent|weather|score|price|today.{0,15}(update|happen))\b|समाचार|ताज़ा|ताजा|खबर|ಸುದ್ದಿ|ಇತ್ತೀಚಿನ', latest_question, re.I))
             sources = []
             web_status = None
-            if self.path == '/chat' and body.get('web') is True:
+            if self.path == '/chat' and (body.get('web') is True or automatic_web):
                 query = next((m['content'] for m in reversed(messages) if m['role'] == 'user'), '')
                 try:
-                    process = subprocess.run([sys.executable, str(Path(__file__).with_name('search_web.py'))], input=query[:1000], text=True, capture_output=True, timeout=22, check=True)
+                    process = subprocess.run([sys.executable, str(Path(__file__).with_name('search_web.py'))], input=(query[:900] + ' ' + now.strftime('%Y-%m-%d') if automatic_web else query[:1000]), text=True, capture_output=True, timeout=22, check=True)
                     sources = json.loads(process.stdout)
                     if not sources: raise RuntimeError('No results')
                     web_status = 'Live search completed'
