@@ -352,6 +352,82 @@ class Menu:
         else: raise DemoError('Choose a number or letter shown in the menu.')
 
 
+COMPACT_MENU = """
+JETSON NANO
+ 1  Prepare selected models
+ 2  Board and dependency report
+ 3  Text Conversation
+ 4  Camera Object Detection
+ 5  Camera-Guided Object Hunt
+ 0  Exit
+Ctrl+C cancels and returns here.
+"""
+
+
+class CompactMenu(Menu):
+    """Three demos sharing one text model and one detector."""
+    def setup_text(self):
+        resource_check(start=True)
+        runtime = ROOT / '.vendor/llama.cpp/build/bin/llama-server'
+        if not os.access(str(runtime), os.X_OK):
+            if shutil.disk_usage(str(ROOT)).free < 6 * 1024 ** 3:
+                raise DemoError('Text runtime needs building. Free at least 6 GiB first; use --storage. Existing working runtimes need no rebuild.')
+            self.s.run(['bash', 'scripts/install_system.sh'], monitor=False, terminal=True)
+            self.s.run(['env', 'JOBS=1', 'BUILD_MINIMAL=1', 'bash', 'scripts/build_runtimes.sh'], timeout=14400)
+        self.py('scripts/download.py', 'smol360-q4', timeout=7200)
+        print('Text model ready: SmolLM2-360M Q4 (258 MiB).')
+
+    def prepare_vision(self):
+        resource_check(start=True)
+        executable = vision_python()
+        if not executable:
+            if shutil.disk_usage(str(ROOT)).free < 6 * 1024 ** 3:
+                raise DemoError('Camera libraries need building. Free at least 6 GiB first; text remains available.')
+            self.s.run(['env', 'JOBS=1', 'bash', 'scripts/build_vision.sh'], monitor=False, terminal=True)
+            executable = vision_python()
+        if not executable:
+            raise DemoError('Camera bindings unavailable in installed Python interpreters.')
+        if any(not shutil.which(name) for name in ('v4l2-ctl', 'gst-launch-1.0')):
+            if shutil.disk_usage(str(ROOT)).free < 1024 ** 3:
+                raise DemoError('Camera discovery tools need free disk headroom before installation.')
+            self.s.run(['bash', 'scripts/install_camera_tools.sh'], monitor=False, terminal=True)
+        if not vision_ready('detect'):
+            if shutil.disk_usage(str(ROOT)).free < 1024 ** 3:
+                raise DemoError('Camera model preparation needs at least 1 GiB free headroom.')
+            self.s.run([executable, 'labs/vision.py', 'detect', '--prepare'], timeout=3600)
+        print('Object detector prepared.')
+
+    def setup(self):
+        self.setup_text()
+        try:
+            self.prepare_vision()
+        except DemoError as error:
+            print('Text ready; camera preparation incomplete:', error)
+
+    def action(self, choice):
+        if choice == '1':
+            self.setup()
+        elif choice == '2':
+            self.py('scripts/check_board.py', monitor=False)
+            print('Camera Python:', vision_python() or 'missing')
+            print('Camera:', detect_camera() or 'not detected')
+            print('Use --storage for disk usage and existing model locations.')
+        elif choice == '3':
+            self.setup_text()
+            self.llm('smol360-q4')
+            self.py('labs/chat.py', timeout=0)
+        elif choice == '4':
+            executable = self.ensure_vision('detect')
+            source = self.camera_source()
+            output = 'display://0' if os.environ.get('DISPLAY') else str(self.s.session / 'detection.mp4')
+            self.s.run([executable, 'labs/vision.py', 'detect', source, output, '--frames', '300'], timeout=1800)
+        elif choice == '5':
+            self.setup_text()
+            self.camera_projects(mode='hunt')
+        else:
+            raise DemoError('Choose 0–5 from this menu.')
+
+
 MENU = '''
 LOCAL AI ON JETSON NANO
 SETUP
@@ -394,6 +470,7 @@ Enter the experiment number. Ctrl+C cancels and returns here.
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--all', action='store_true', help='Open the full experiment catalogue')
     parser.add_argument('--storage', action='store_true', help='Read-only disk and directory usage report')
     parser.add_argument('--list', action='store_true', help='List named experiments without starting hardware or models')
     parser.add_argument('--setup-only', action='store_true', help='Prepare core dependencies and exit')
@@ -404,7 +481,7 @@ def main():
         storage_main()
         return
     if args.list:
-        print(MENU)
+        print(MENU if args.all else COMPACT_MENU)
         return
     if sys.version_info < (3, 6):
         raise SystemExit('Python 3.6 or newer is required; keep JetPack system Python.')
@@ -412,10 +489,10 @@ def main():
     subprocess.run([sys.executable, 'scripts/check_board.py'] + ([] if args.check else ['--strict']), check=True)
     if args.check:
         print('Available RAM (MiB):', available_memory(), 'Temperature (C):', temperature())
-        print('Core missing/corrupt:', ', '.join(core_missing(verify=True)) or 'none')
+        print('Core missing/corrupt:', ', '.join(core_missing(verify=True, compact=not args.all)) or 'none')
         print('Camera Python:', vision_python() or 'not installed')
         print('Camera:', detect_camera() or 'none responding')
-        for mode in VISION_MODES:
+        for mode in (VISION_MODES if args.all else ('detect',)):
             print('Camera {}: {}'.format(mode, 'prepared' if vision_ready(mode) else 'needs preparation'))
         return
     if not args.setup_only and not sys.stdin.isatty():
@@ -428,7 +505,7 @@ def main():
         except BlockingIOError:
             raise SystemExit('Another demo menu is running. Exit that menu first.')
         supervisor = Supervisor()
-        menu = Menu(supervisor)
+        menu = Menu(supervisor) if args.all else CompactMenu(supervisor)
         signal.signal(signal.SIGTERM, lambda *args: sys.exit(143))
         print('Session logs:', supervisor.session)
         try:
@@ -437,7 +514,7 @@ def main():
                 return
             while True:
                 try:
-                    print(MENU)
+                    print(MENU if args.all else COMPACT_MENU)
                     choice = input('Select demo: ').strip()
                     if choice == '0':
                         break

@@ -146,7 +146,7 @@ class MenuLoopTests(unittest.TestCase):
     def test_failed_selection_returns_to_menu_and_cleans_server(self):
         with tempfile.TemporaryDirectory() as tmp:
             with mock.patch.object(menu, 'ROOT', Path(tmp)), mock.patch.object(menu.os, 'chdir'):
-                with mock.patch.object(menu.subprocess, 'run'), mock.patch.object(menu.sys, 'argv', ['demo_menu.py']):
+                with mock.patch.object(menu.subprocess, 'run'), mock.patch.object(menu.sys, 'argv', ['demo_menu.py', '--all']):
                     with mock.patch.object(menu.sys.stdin, 'isatty', return_value=True):
                         with mock.patch.object(menu, 'Supervisor') as supervisor, mock.patch.object(menu, 'Menu') as view:
                             view.return_value.action.side_effect = [runtime.DemoError('fixture failure'), None]

@@ -67,3 +67,28 @@ class StorageTests(unittest.TestCase):
         with mock.patch.object(storage_report.subprocess, 'run', side_effect=subprocess.TimeoutExpired('du', 45)) as run:
             storage_report.inspect(['du', '-x', '-h', '--max-depth=1', '/var'])
             self.assertEqual(run.call_count, 1)
+
+class CompactTests(unittest.TestCase):
+    def view(self):
+        return m.CompactMenu(mock.Mock(config=json.loads((m.ROOT / 'config.json').read_text())))
+
+    def test_compact_reuses_server_and_downloads_one_model(self):
+        view = self.view()
+        with mock.patch.object(m, 'resource_check'), mock.patch.object(m.os, 'access', return_value=True):
+            with mock.patch.object(view, 'py') as py:
+                view.setup_text()
+                py.assert_called_once_with('scripts/download.py', 'smol360-q4', timeout=7200)
+        view.s.run.assert_not_called()
+
+    def test_compact_camera_prepares_only_detector(self):
+        view = self.view()
+        with mock.patch.object(m, 'resource_check'), mock.patch.object(m, 'vision_python', return_value='/usr/bin/python3'):
+            with mock.patch.object(m.shutil, 'which', return_value='/usr/bin/tool'), mock.patch.object(m, 'vision_ready', return_value=False), mock.patch.object(m.shutil, 'disk_usage', return_value=mock.Mock(free=4 * 1024 ** 3)):
+                view.prepare_vision()
+        view.s.run.assert_called_once_with(['/usr/bin/python3', 'labs/vision.py', 'detect', '--prepare'], timeout=3600)
+
+    def test_camera_failure_keeps_text_prepared(self):
+        view = self.view()
+        with mock.patch.object(view, 'setup_text') as text, mock.patch.object(view, 'prepare_vision', side_effect=m.DemoError('needs space')):
+            view.setup()
+            text.assert_called_once_with()

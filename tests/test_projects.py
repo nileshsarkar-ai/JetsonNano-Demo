@@ -45,7 +45,7 @@ class ProjectTests(unittest.TestCase):
         self.assertNotIn('LoRA', demo_menu.MENU)
 
     def test_list_command_needs_no_hardware_or_models(self):
-        result = subprocess.run(['bash', str(ROOT / 'scripts/run_demo.sh'), '--list'],
+        result = subprocess.run(['bash', str(ROOT / 'scripts/run_demo.sh'), '--all', '--list'],
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('28  Context Memory Challenge', result.stdout)

@@ -18,8 +18,9 @@ bash scripts/run_demo.sh
 
 Already cloned? Run `git pull --ff-only` inside the repository, then `bash scripts/run_demo.sh`.
 
-The command opens a numbered experiment list with full names. Choose **1** to prepare before class, then select **15 Mission Control**, **16 Document Detective**, **17 Story Director**, **18 Scene Memory Detective**, **19 AI Visual Scavenger Hunt**, or **20 Camera Change Journal**. Earlier labs remain directly available as **3–14**, including **9 Persistent Memory Assistant** and **14 Sampling Playground**. **21** runs the prepared demonstrations sequentially and skips an unavailable optional camera. [Full experiment list](docs/EXPERIMENTS.md).
+The default menu contains three demos: **3 Text Conversation**, **4 Camera Object Detection**, and **5 Camera-Guided Object Hunt**. Select **1** to prepare their shared SmolLM2-360M Q4 model (258 MiB) and SSD-Mobilenet detector. Existing verified files are reused. Only the language server is compiled in this compact setup; no TinyStories, extra text models, classification, pose or segmentation models are downloaded. The object hunt combines detection and an LLM; it is not a trained VLA robot policy.
 
+The full previous catalogue remains available with `bash scripts/run_demo.sh --all`. Its option numbers are unchanged.
 Prepared text projects need only the Nano: no external GPU, paid API, microphone or speaker. The showcase uses pinned SmolLM2-360M Q4 with short outputs; no real-time speed claim is made. Camera processing and LLM generation run sequentially to avoid loading both at once. The launcher includes memory/disk/thermal checks, timeouts, server cleanup and session logs. These reduce risk but do not replace a real-board rehearsal.
 
 [Showcase projects and student sequence](docs/SHOWCASE.md) · [Menu safeguards](docs/DEMO-MENU.md) · [Setup commands](docs/SETUP-WALKTHROUGH.md) · [Walkthrough video](docs/media/jetson-nano-setup.mp4)
@@ -215,7 +216,7 @@ The classroom PPT uses a light theme and explains the 27 named experiments. Text
 
 ### Automatic preparation and board detection
 
-Run `bash scripts/run_demo.sh` after cloning. Menu 1 installs system dependencies, builds the runtimes, downloads and verifies the text models, indexes the included notes, and prepares all four camera models sequentially. First preparation needs Internet, sudo and at least 6 GiB free working space. No manual model downloads or API keys are required. Keep the downloaded caches on the Nano for offline use.
+For the full catalogue, run `bash scripts/run_demo.sh --all` after cloning. Its menu 1 installs system dependencies, builds the runtimes, downloads and verifies the text models, indexes the included notes, and prepares all four camera models sequentially. First preparation needs Internet, sudo and at least 6 GiB free working space. No manual model downloads or API keys are required. Keep the downloaded caches on the Nano for offline use.
 
 `bash scripts/run_demo.sh --check` reports OS, L4T, Python, missing/corrupt text assets, camera-model preparation and a working USB/CSI camera if detected. It also works on an unsupported OS to help diagnosis; installation still requires original Nano / L4T R32. Camera discovery captures one frame without saving it, tries available capture devices with timeouts, and allows a manual URI override. Missing cameras are skipped in the prepared sequence.
 
@@ -228,3 +229,5 @@ Camera preparation loads each network to download its weights and build its devi
 On the reported board, `python` is 3.11.3 and `python3` is 3.6.9. The Bash launcher intentionally invokes `python3`, preserving JetPack's system environment. Both versions are included in software CI. No symlink changes or Python upgrades are needed.
 
 With only about 4 GB free, do not start full setup. Run `bash scripts/run_demo.sh --storage` for a read-only filesystem, partition and directory-size report; run `bash scripts/run_demo.sh --check` for OS/L4T/Python details. Storage scans may be partial where permissions prevent access. Nothing is deleted automatically. Full setup checks for at least 6 GiB free before installation and checks again before camera preparation; this is a minimum headroom check, not a guarantee of total build size. Preserve other users' files and the JetPack installation.
+
+Compact preparation reuses an existing server and downloads only its selected text model. A fresh runtime or camera-library build retains the 6 GiB safety gate; installed camera bindings need at least 1 GiB free to prepare the detector. With 4 GB free, first inspect `--storage` and `--check`; do not assume the presence of Python means the AI runtimes are installed. The storage report lists existing `.gguf`, `.onnx`, `.engine` and `.safetensors` files in your home/repository, subject to permissions and a timeout. It never deletes, loads, moves or trusts unknown models. Models belonging to others are not automatically reused.

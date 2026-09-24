@@ -28,14 +28,20 @@ checkout llama.cpp https://github.com/ggml-org/llama.cpp.git 23106f94ea2bc3da929
 if [[ "${WITH_AUDIO:-0}" == "1" ]]; then
 checkout whisper.cpp https://github.com/ggml-org/whisper.cpp.git 7395c70a748753e3800b63e3422a2b558a097c80
 fi
+if [[ "${BUILD_MINIMAL:-0}" != "1" ]]; then
 checkout llama2.c https://github.com/karpathy/llama2.c.git 350e04fe35433e6d2941dce5a1f53308f87058eb
+fi
 
 "$CMAKE_BIN" -S "$PROJECT_ROOT/.vendor/llama.cpp" -B "$PROJECT_ROOT/.vendor/llama.cpp/build" \
   -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 \
   -DCMAKE_CXX_STANDARD_LIBRARIES=-lstdc++fs \
   -DGGML_CUDA=OFF -DGGML_NATIVE=OFF -DGGML_CPU_ARM_ARCH=armv8-a \
   -DGGML_OPENMP=ON -DLLAMA_CURL=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_SERVER=ON
-"$CMAKE_BIN" --build "$PROJECT_ROOT/.vendor/llama.cpp/build" --target llama-server llama-cli llama-bench llama-quantize -- -j"$JOBS"
+if [[ "${BUILD_MINIMAL:-0}" == "1" ]]; then
+  "$CMAKE_BIN" --build "$PROJECT_ROOT/.vendor/llama.cpp/build" --target llama-server -- -j"$JOBS"
+else
+  "$CMAKE_BIN" --build "$PROJECT_ROOT/.vendor/llama.cpp/build" --target llama-server llama-cli llama-bench llama-quantize -- -j"$JOBS"
+fi
 
 if [[ "${WITH_AUDIO:-0}" == "1" ]]; then
 "$CMAKE_BIN" -S "$PROJECT_ROOT/.vendor/whisper.cpp" -B "$PROJECT_ROOT/.vendor/whisper.cpp/build" \
@@ -43,5 +49,7 @@ if [[ "${WITH_AUDIO:-0}" == "1" ]]; then
   -DWHISPER_CUDA=OFF -DWHISPER_BUILD_TESTS=OFF -DBUILD_SHARED_LIBS=OFF
 "$CMAKE_BIN" --build "$PROJECT_ROOT/.vendor/whisper.cpp/build" --target main -- -j"$JOBS"
 fi
+if [[ "${BUILD_MINIMAL:-0}" != "1" ]]; then
 gcc-8 -O3 -fopenmp "$PROJECT_ROOT/.vendor/llama2.c/run.c" -lm -o "$PROJECT_ROOT/.vendor/llama2.c/run"
+fi
 echo "CPU runtimes built. No CUDA or Python installation was replaced."

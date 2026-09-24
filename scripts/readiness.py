@@ -27,18 +27,18 @@ def vision_python():
     return None
 
 
-def core_missing(root=ROOT, verify=False):
+def core_missing(root=ROOT, verify=False, compact=False):
     config = json.loads((root / 'config.json').read_text())
     manifest = json.loads((root / 'models.json').read_text())
-    missing = [p for p in RUNTIMES if not os.access(str(root / p), os.X_OK)]
-    for key in set([config['model'], 'smol360-q4', 'stories15m']):
+    missing = [p for p in (RUNTIMES[:1] if compact else RUNTIMES) if not os.access(str(root / p), os.X_OK)]
+    for key in (['smol360-q4'] if compact else set([config['model'], 'smol360-q4', 'stories15m'])):
         item = manifest[key]
         path = root / 'models' / item['file']
         if not path.is_file() or path.stat().st_size != item['bytes']:
             missing.append('model: ' + key)
         elif verify and sha256(path) != item['sha256']:
             missing.append('checksum: ' + key)
-    for name in ('ffmpeg', 'gst-launch-1.0', 'v4l2-ctl'):
+    for name in (() if compact else ('ffmpeg', 'gst-launch-1.0', 'v4l2-ctl')):
         if not shutil.which(name):
             missing.append('command: ' + name)
     return sorted(missing)

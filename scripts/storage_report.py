@@ -34,6 +34,10 @@ def main():
     for path in (str(ROOT), str(Path.home()), '/var', '/usr/local', '/opt'):
         if os.path.isdir(path):
             inspect(['du', '-x', '-h', '--max-depth=1', path])
+    print('\nExisting model candidates (paths only; not loaded or modified):')
+    inspect(['find', str(Path.home()), str(ROOT), '-xdev', '-type', 'f', '(',
+             '-iname', '*.gguf', '-o', '-iname', '*.onnx', '-o', '-iname', '*.engine',
+             '-o', '-iname', '*.safetensors', ')', '-print'])
     print('\nReview large directories before cleanup. Permission-denied entries mean the report is partial.')
     print('Do not delete CUDA, TensorRT, system Python, or other users\' files.')
 
