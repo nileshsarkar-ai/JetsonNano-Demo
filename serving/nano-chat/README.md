@@ -1,5 +1,7 @@
-# A30 browser demonstration
+# Jetson Nano Demo browser portal
 
-User-requested hosted inference demo, not a research benchmark or training run. One A30, browser chat on port 6006, SmolLM2-360M-Instruct FP16. The Nano uses the same base model quantized as GGUF Q4, so outputs and performance are not identical.
+A light-themed, password-protected text chat portal. Inference uses the JarvisLabs hosted `glm-5.3-flash` API; it does not run on the Nano or the hosting A30. This is separate from the repository's local Nano demos and has no camera access.
 
-Set MODEL_REVISION to a resolved Hugging Face commit before launching. Install requirements in an isolated remote venv. Model weights download only onto the GPU instance. The app generates a local access.json with browser login credentials; never commit that file. Chat histories are session inputs, not saved by application code. Source is preserved in Git; remote disk holds reproducible model cache and operational logs. No checkpoints or training results are produced.
+Create `/home/nano-demo/access.json` with `password` and `api_key` keys, mode 600. Never commit this file. Start `python3 app.py`; the default listening port is 6006. `DEMO_CONFIG` and `PORT` override configuration location and port. Browser login username is `demo`.
+
+Serve behind HTTPS. The API key stays on the server. Requests are bounded to 12 history messages, 40 KB payloads, three concurrent upstream calls and 4096 generated tokens. Inference and hosting incur usage charges. Stop the process when no longer needed; provider instance lifecycle is managed separately.
