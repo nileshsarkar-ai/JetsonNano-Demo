@@ -35,6 +35,8 @@ fi
 "$CMAKE_BIN" -S "$PROJECT_ROOT/.vendor/llama.cpp" -B "$PROJECT_ROOT/.vendor/llama.cpp/build" \
   -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 \
   -DCMAKE_CXX_STANDARD_LIBRARIES=-lstdc++fs \
+  "-DCMAKE_C_FLAGS=-include \"$PROJECT_ROOT/scripts/compat/gcc8_neon.h\"" \
+  "-DCMAKE_CXX_FLAGS=-include \"$PROJECT_ROOT/scripts/compat/gcc8_neon.h\"" \
   -DGGML_CUDA=OFF -DGGML_NATIVE=OFF -DGGML_CPU_ARM_ARCH=armv8-a \
   -DGGML_OPENMP=ON -DLLAMA_CURL=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_SERVER=ON
 if [[ "${BUILD_MINIMAL:-0}" == "1" ]]; then
