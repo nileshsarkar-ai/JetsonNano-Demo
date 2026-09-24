@@ -1,4 +1,6 @@
 """Public browser demo; inference uses a server-side hosted API."""
+import base64
+import binascii
 import json
 import os
 import threading
@@ -16,7 +18,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', kind)
         self.send_header('Cache-Control', 'no-store')
         self.send_header('X-Content-Type-Options', 'nosniff')
-        self.send_header('Content-Security-Policy', "default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; frame-ancestors 'none'")
+        self.send_header('Content-Security-Policy', "default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; media-src 'self' blob:; img-src 'self' data:; frame-ancestors 'none'")
         self.end_headers()
         self.wfile.write(body)
 
@@ -25,7 +27,7 @@ class Handler(BaseHTTPRequestHandler):
         self.reply(200, PAGE, 'text/html; charset=utf-8')
 
     def do_POST(self):
-        if self.path != '/chat': return self.reply(404, b'{}')
+        if self.path not in ('/chat', '/vision'): return self.reply(404, b'{}')
         origin = self.headers.get('Origin')
         if origin and origin != 'https://' + self.headers.get('Host', ''):
             return self.reply(403, b'{}')
@@ -33,13 +35,22 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(429, b'{"error":"Busy; please try again shortly."}')
         try:
             size = int(self.headers.get('Content-Length', '0'))
-            if not 0 < size <= 40000: raise ValueError()
-            supplied = json.loads(self.rfile.read(size))['messages']
+            if not 0 < size <= (1500000 if self.path == '/vision' else 40000): raise ValueError()
+            body = json.loads(self.rfile.read(size))
+            supplied = body.get('messages', [])
             if not isinstance(supplied, list): raise ValueError()
-            messages = [{'role':'system','content':'You are a helpful assistant for an engaging student AI demonstration. Be concise, clear and accurate. Never claim to run on local hardware; this is a hosted demonstration. You cannot see a camera or control hardware.'}]
+            messages = [{'role':'system','content':'You are a helpful assistant for an engaging student AI demonstration. Be concise, clear and accurate. Never claim to run on local hardware; this is a hosted demonstration. Analyze images only when provided. You cannot control hardware. Do not volunteer infrastructure details; answer honestly if asked.'}]
             for msg in supplied[-12:]:
                 if msg.get('role') not in ('user','assistant') or not isinstance(msg.get('content'),str): raise ValueError()
                 messages.append({'role':msg['role'],'content':msg['content'][:6000]})
+            if self.path == '/vision':
+                frame = body.get('image', '')
+                if not isinstance(frame, str) or not frame.startswith('data:image/jpeg;base64,'): raise ValueError()
+                raw = base64.b64decode(frame.split(',', 1)[1], validate=True)
+                if not 0 < len(raw) <= 1000000 or not raw.startswith(b'\xff\xd8'): raise ValueError()
+                prompt = body.get('prompt', 'Describe the scene and explain something interesting about it.')
+                if not isinstance(prompt, str): raise ValueError()
+                messages.append({'role':'user','content':[{'type':'text','text':prompt[:2000]}, {'type':'image_url','image_url':{'url':frame}}]})
             payload = {'model':'glm-5.3-flash','messages':messages,'max_tokens':4096,'reasoning_effort':'low','stream':False}
             req = urllib.request.Request('https://models.jarvislabs.net/v1/chat/completions', data=json.dumps(payload).encode(), headers={'Authorization':'Bearer '+CONFIG['api_key'],'Content-Type':'application/json'})
             with urllib.request.urlopen(req, timeout=120) as response:
@@ -47,7 +58,7 @@ class Handler(BaseHTTPRequestHandler):
             answer = result['choices'][0]['message'].get('content')
             if not answer: raise RuntimeError('Empty answer')
             self.reply(200, json.dumps({'answer':answer}).encode())
-        except (ValueError, KeyError, TypeError):
+        except (ValueError, KeyError, TypeError, binascii.Error):
             self.reply(400, b'{"error":"Please enter a shorter message and try again."}')
         except Exception as error:
             print('Chat failed:', type(error).__name__, flush=True)
