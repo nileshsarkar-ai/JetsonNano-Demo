@@ -39,7 +39,7 @@ class Handler(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(size))
             supplied = body.get('messages', [])
             if not isinstance(supplied, list): raise ValueError()
-            messages = [{'role':'system','content':'You are a helpful assistant for an engaging student AI demonstration. Be concise, clear and accurate. Never claim to run on local hardware; this is a hosted demonstration. Analyze images only when provided. You cannot control hardware. Do not volunteer infrastructure details; answer honestly if asked.'}]
+            messages = [{'role':'system','content':'You are Jetson Nano Companion, a friendly companion bot for students. Introduce yourself as the Jetson Nano companion bot when appropriate. Be concise, clear and accurate. Never claim to run on local hardware; this is a hosted demonstration. Analyze images only when provided. You cannot control hardware. Do not volunteer infrastructure details; answer honestly if asked.'}]
             for msg in supplied[-12:]:
                 if msg.get('role') not in ('user','assistant') or not isinstance(msg.get('content'),str): raise ValueError()
                 messages.append({'role':msg['role'],'content':msg['content'][:6000]})
@@ -51,7 +51,7 @@ class Handler(BaseHTTPRequestHandler):
                 prompt = body.get('prompt', 'Describe the scene and explain something interesting about it.')
                 if not isinstance(prompt, str): raise ValueError()
                 messages.append({'role':'user','content':[{'type':'text','text':prompt[:2000]}, {'type':'image_url','image_url':{'url':frame}}]})
-            payload = {'model':'glm-5.3-flash','messages':messages,'max_tokens':4096,'reasoning_effort':'low','stream':False}
+            payload = {'model':'glm-5.3-flash','messages':messages,'max_tokens':1024 if self.path == '/vision' else 4096,'reasoning_effort':'low','stream':False}
             req = urllib.request.Request('https://models.jarvislabs.net/v1/chat/completions', data=json.dumps(payload).encode(), headers={'Authorization':'Bearer '+CONFIG['api_key'],'Content-Type':'application/json'})
             with urllib.request.urlopen(req, timeout=120) as response:
                 result = json.load(response)
