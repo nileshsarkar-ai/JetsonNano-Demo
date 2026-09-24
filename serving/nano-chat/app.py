@@ -16,9 +16,15 @@ PAGE = Path(__file__).with_name('index.html').read_bytes()
 SLOTS = threading.BoundedSemaphore(3)
 
 class Handler(BaseHTTPRequestHandler):
+    def setup(self):
+        super().setup()
+        self.connection.settimeout(150)
+
     def reply(self, status, body, kind='application/json'):
         self.send_response(status)
         self.send_header('Content-Type', kind)
+        self.send_header('Content-Length', str(len(body)))
+        if status == 429: self.send_header('Retry-After', '3')
         self.send_header('Cache-Control', 'no-store')
         self.send_header('X-Content-Type-Options', 'nosniff')
         self.send_header('Content-Security-Policy', "default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; media-src 'self' blob:; img-src 'self' data:; frame-ancestors 'none'")
@@ -40,10 +46,13 @@ class Handler(BaseHTTPRequestHandler):
             size = int(self.headers.get('Content-Length', '0'))
             if not 0 < size <= (1500000 if self.path == '/vision' else 40000): raise ValueError()
             body = json.loads(self.rfile.read(size))
+            if not isinstance(body, dict): raise ValueError()
             supplied = body.get('messages', [])
             if not isinstance(supplied, list): raise ValueError()
+            if self.path == '/chat' and (not supplied or not any(isinstance(m, dict) and m.get('role') == 'user' and isinstance(m.get('content'), str) and m['content'].strip() for m in supplied)): raise ValueError()
             messages = [{'role':'system','content':'You are Jetson Nano Companion, a friendly companion bot for students. Introduce yourself as the Jetson Nano companion bot when appropriate. Be concise, clear and accurate. Follow the requested response language, including Hindi and Kannada. Use Devanagari for Hindi and Kannada script for Kannada unless transliteration is requested. Continue in the requested language until the user asks to switch. Keep greetings and ordinary answers focused on helping the user. Do not add deployment disclaimers or mention hosting, providers, model names, or where computation runs unless the user explicitly asks about them. If explicitly asked, answer accurately: inference uses a remote API. Analyze images only when provided. You cannot control hardware.'}]
             for msg in supplied[-12:]:
+                if not isinstance(msg, dict): raise ValueError()
                 if msg.get('role') not in ('user','assistant') or not isinstance(msg.get('content'),str): raise ValueError()
                 messages.append({'role':msg['role'],'content':msg['content'][:6000]})
             sources = []

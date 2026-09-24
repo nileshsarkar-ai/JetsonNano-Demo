@@ -1,0 +1,102 @@
+{
+  "date": "2026-09-24",
+  "scope": "Bounded 12-request burst, not sustained capacity testing; physical camera not tested",
+  "results": {
+    "invalid": [
+      {
+        "status": 400,
+        "seconds": 0.14
+      },
+      {
+        "status": 400,
+        "seconds": 0.23
+      },
+      {
+        "status": 400,
+        "seconds": 0.13
+      },
+      {
+        "status": 400,
+        "seconds": 0.14
+      },
+      {
+        "status": 403,
+        "seconds": 0.12
+      },
+      {
+        "status": 404,
+        "seconds": 0.14
+      }
+    ],
+    "burst": [
+      {
+        "status": 200,
+        "seconds": 3.45
+      },
+      {
+        "status": 200,
+        "seconds": 3.44
+      },
+      {
+        "status": 200,
+        "seconds": 2.95
+      },
+      {
+        "status": 429,
+        "seconds": 0.16
+      },
+      {
+        "status": 429,
+        "seconds": 0.16
+      },
+      {
+        "status": 429,
+        "seconds": 0.17
+      },
+      {
+        "status": 429,
+        "seconds": 0.2
+      },
+      {
+        "status": 429,
+        "seconds": 0.13
+      },
+      {
+        "status": 200,
+        "seconds": 0.12
+      },
+      {
+        "status": 200,
+        "seconds": 0.11
+      },
+      {
+        "status": 200,
+        "seconds": 0.14
+      },
+      {
+        "status": 200,
+        "seconds": 0.11
+      }
+    ],
+    "recovery": [
+      {
+        "status": 200,
+        "seconds": 1.5
+      },
+      {
+        "status": 200,
+        "seconds": 1.47
+      }
+    ],
+    "features": [
+      {
+        "status": 200,
+        "seconds": 1.65
+      },
+      {
+        "status": 200,
+        "seconds": 2.3
+      }
+    ]
+  }
+}
