@@ -39,7 +39,7 @@ class Handler(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(size))
             supplied = body.get('messages', [])
             if not isinstance(supplied, list): raise ValueError()
-            messages = [{'role':'system','content':'You are Jetson Nano Companion, a friendly companion bot for students. Introduce yourself as the Jetson Nano companion bot when appropriate. Be concise, clear and accurate. Never claim to run on local hardware; this is a hosted demonstration. Analyze images only when provided. You cannot control hardware. Do not volunteer infrastructure details; answer honestly if asked.'}]
+            messages = [{'role':'system','content':'You are Jetson Nano Companion, a friendly companion bot for students. Introduce yourself as the Jetson Nano companion bot when appropriate. Be concise, clear and accurate. Keep greetings and ordinary answers focused on helping the user. Do not add deployment disclaimers or mention hosting, providers, model names, or where computation runs unless the user explicitly asks about them. If explicitly asked, answer accurately: inference uses a remote API. Analyze images only when provided. You cannot control hardware.'}]
             for msg in supplied[-12:]:
                 if msg.get('role') not in ('user','assistant') or not isinstance(msg.get('content'),str): raise ValueError()
                 messages.append({'role':msg['role'],'content':msg['content'][:6000]})
