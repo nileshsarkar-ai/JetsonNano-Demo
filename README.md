@@ -1,14 +1,8 @@
 # JetsonNano-Demo
 
-Runnable teaching code for the **original Jetson Nano 4GB (2019)** on **JetPack 4 / Ubuntu 18.04**. The board scripts use **Python 3.6+ and its standard library**. The default inference path uses native **CPU-only** C/C++ runtimes.
+Three local AI demonstrations for the **original Jetson Nano 4GB**, with an optional camera. The reported board runs **Ubuntu 18.04.6 LTS**, with `python` **3.11.3** and `python3` **3.6.9**. Installation checks for **JetPack 4 / L4T R32** before making changes.
 
-The student showcase includes an LLM tool-planning assistant, a document detective, an interactive story director, and camera projects for scene memory, visual scavenger hunts and change journals. Projects run sequentially on the Nano, with short local-model outputs and an optional camera. The active menu requires only the Nano and optional camera. Historical audio and training code remains in the repository for reference but is excluded from the menu and default setup. See [the showcase guide](docs/SHOWCASE.md).
-
-**Validation boundary:** the pinned runtimes and real small models were exercised on the development Mac (ARM64 CPU). This is not a claim of testing on a physical Nano. See [docs/VALIDATION.md](docs/VALIDATION.md) for actual checks and remaining board checks.
-
-## One-command demo menu
-
-On the original Nano with JetPack 4 / Ubuntu 18.04 with Python 3.6 or newer (including 3.11):
+## Get started
 
 ```bash
 git clone https://github.com/nileshsarkar-ai/JetsonNano-Demo.git
@@ -16,228 +10,119 @@ cd JetsonNano-Demo
 bash scripts/run_demo.sh
 ```
 
-Already cloned? Run `git pull --ff-only` inside the repository, then `bash scripts/run_demo.sh`.
-
-The default menu contains three demos: **3 Text Conversation**, **4 Camera Object Detection**, and **5 Camera-Guided Object Hunt**. Select **1** to prepare their shared SmolLM2-360M Q4 model (258 MiB) and SSD-Mobilenet detector. Existing verified files are reused. Only the language server is compiled in this compact setup; no TinyStories, extra text models, classification, pose or segmentation models are downloaded. The object hunt combines detection and an LLM; it is not a trained VLA robot policy.
-
-The full previous catalogue remains available with `bash scripts/run_demo.sh --all`. Its option numbers are unchanged.
-Prepared text projects need only the Nano: no external GPU, paid API, microphone or speaker. The showcase uses pinned SmolLM2-360M Q4 with short outputs; no real-time speed claim is made. Camera processing and LLM generation run sequentially to avoid loading both at once. The launcher includes memory/disk/thermal checks, timeouts, server cleanup and session logs. These reduce risk but do not replace a real-board rehearsal.
-
-[Showcase projects and student sequence](docs/SHOWCASE.md) · [Menu safeguards](docs/DEMO-MENU.md) · [Setup commands](docs/SETUP-WALKTHROUGH.md) · [Walkthrough video](docs/media/jetson-nano-setup.mp4)
-
-The sections below retain the original manual reference. Speech and training sections are historical optional workflows outside the current Nano-and-camera presentation. For the active demo list, use [Named experiments](docs/EXPERIMENTS.md).
-
-## 1. Copy the code to the Nano
-
-Clone the project **on the Nano**, or open your existing local project folder. For a fresh clone:
+Already cloned:
 
 ```bash
-git clone https://github.com/nileshsarkar-ai/JetsonNano-Demo.git
 cd JetsonNano-Demo
-python3 scripts/check_board.py --strict
-bash scripts/install_system.sh
-JOBS=2 bash scripts/build_runtimes.sh
+git pull --ff-only
+bash scripts/run_demo.sh
 ```
 
-The strict check requires an original Nano, Linux ARM64, and L4T R32. It rejects Orin and other platforms before installing anything. The installer uses the configured Ubuntu repositories. It does not upgrade Ubuntu, change system Python, replace CUDA, enable swap, or alter power settings.
+The Bash command selects Python, checks the board and opens this menu:
 
-The build uses GCC/G++ 8, targets ARMv8-A, and compiles the runtimes without CUDA. If CMake is older than 3.14, it builds a pinned CMake 3.22.6 privately under `.tools/`. That first build can take a long time. Allow several GB of free disk space. Reduce `JOBS=1` if compilation exhausts memory.
+| Choice | Action |
+|---|---|
+| 1 | Prepare selected models and dependencies |
+| 2 | Board and dependency report |
+| 3 | Text Conversation |
+| 4 | Camera Object Detection |
+| 5 | Camera-Guided Object Hunt |
+| 6 | Storage Analyzer |
+| 0 | Exit |
 
-Setup fetches pinned runtime sources when they are not already cached locally. Model weights are downloaded on demand using `scripts/download.py`; no model weights or compiled binaries are tracked in Git. Internet access is needed for initial packages, sources and selected model downloads. Inference runs offline after setup. Use a stable power supply and cooling. A headless Nano leaves more memory available than a desktop session.
+**Text Conversation** uses SmolLM2-360M Instruct Q4, a roughly **258 MiB** download. **Camera Object Detection** uses SSD-Mobilenet-v2 through JetPack's TensorRT stack. **Camera-Guided Object Hunt** shares those two models: the LLM proposes objects to find, and camera detections determine which have been found. This is a detector-plus-LLM application, not a trained VLA robot policy.
 
-## 2. Download small models
+The default setup does not download the larger catalogue's extra models. Camera and language inference run sequentially. No paid API, external GPU, microphone or speaker is required.
+
+## Check storage first
+
+For a 32 GB card with about 4 GB free, inspect the board before choosing setup:
 
 ```bash
-python3 scripts/download.py --list
-python3 scripts/download.py smol135-q4 smol360-q4 stories15m
+bash scripts/run_demo.sh --storage
+bash scripts/run_demo.sh --check
 ```
 
-Downloads use **exact Hugging Face revisions and SHA-256 checksums** in `models.json`. Partial downloads never replace verified files. Transient network failures retry at most three times. Checksum errors fail visibly; there are no hidden fallback models.
+The **Storage Analyzer**, also available as menu **6**, reports:
 
-| Key | Model | Purpose |
-|---|---|---|
-| `smol135-q4`, `smol135-q8` | SmolLM2 135M Instruct | Fast initial experiments, quantization comparison |
-| `smol360-q4`, `smol360-q8` | SmolLM2 360M Instruct | Larger small-model comparison |
-| `qwen05-q4`, `qwen05-q8` | Qwen2.5 0.5B Instruct | Another instruction model |
-| `whisper-tiny-en` | Whisper tiny.en | English speech recognition |
-| `stories15m`, `stories42m`, `stories110m` | TinyStories models | Story generation with pure C |
+- Card/partition sizes, used/free space and inode usage.
+- Large directories, ordered by size.
+- Space grouped into model candidates, installed software/libraries, code/Git data, caches, logs, media and other files.
+- The 30 largest individual files, with paths and allocated sizes.
+- The 30 largest installed system packages.
+- Existing model-file locations in the accessible home/repository directories.
 
-SmolLM2 GGUFs come from the named community quantizer in the manifest. Qwen's GGUF comes from Qwen. Each upstream model retains its own license. The 135M model has limited instruction-following ability and may invent facts. Model fit in memory is not a promise of good answers or real-time response.
+The scan reads metadata and does not delete, move or load files. Categories use filename/path heuristics. Package figures overlap with file totals; do not add them together. Permission errors and time limits produce explicitly partial results. Other mounted filesystems, filesystem metadata and deleted-but-open files are not included in the root file inventory. A marketed 32 GB card is approximately 29.8 GiB before partition/filesystem overhead.
 
-## 3. Start a local model
+A **fresh runtime or camera-library build requires at least 6 GiB free**. Existing working runtimes can be reused; preparing the detector with installed camera bindings requires at least 1 GiB free headroom. These checks are minimum safeguards, not a guarantee of total build size. Unknown models found elsewhere are reported, not automatically adopted or deleted.
 
-Terminal 1:
+## Automatic setup
+
+Choose **1**, or prepare without opening the interactive menu:
 
 ```bash
-python3 scripts/serve.py
+bash scripts/run_demo.sh --setup-only
 ```
 
-Defaults live in `config.json`: 135M Q4 model, 1,024-token context, four CPU threads, 64-token processing batches, and one server slot. The server binds to **127.0.0.1 only**. Keep it running while using the language-model labs. Wait until it reports that it is listening.
+Setup checks memory and disk, builds a missing language server, downloads/verifies the selected text model, checks native camera bindings, installs missing discovery tools, and prepares the detector. Camera preparation downloads weights and builds its device-specific TensorRT engine before camera demonstrations. Existing verified text weights and prepared camera assets are reused.
 
-Terminal 2:
+Initial preparation needs Internet and may request a sudo password. Sources, compiled runtimes and weights are downloaded/generated on the Nano rather than stored in Git. Once preparation succeeds, the demos use local assets. Text model downloads use pinned revisions and SHA-256 checksums; camera preparation receipts check cached file sizes, not cryptographic upstream provenance.
+
+If camera preparation cannot finish, setup reports it and leaves the text demo available. A completed text setup does not certify camera readiness. Keep the `.vendor/`, `.tools/`, `models/` and `runs/` directories when reusing the installation.
+
+## Python and system detection
+
+The launcher prefers an installed **Python 3.11**, checking `python3.11`, `python`, then `python3`. If none is 3.11, it falls back to `python3` (minimum 3.6). It checks essential standard-library modules and never changes system Python symlinks.
+
+JetPack camera extensions may require the system Python ABI. The launcher checks the selected interpreter and `/usr/bin/python3`, then runs camera code in the interpreter that can import the native bindings. To explicitly select system Python:
 
 ```bash
-python3 labs/chat.py
-python3 labs/chat.py --prompt "Explain what a language-model token is." --temperature 0 --max-tokens 64
-python3 labs/inspect_tokens.py "Jetson Nano 4GB"
+DEMO_PYTHON=/usr/bin/python3 bash scripts/run_demo.sh
 ```
 
-Use `/reset` to clear chat history and `/quit` to exit. The client counts actual prompt tokens, reserves space for the answer, and removes old complete turns when necessary. A single oversized request fails clearly instead of silently discarding its beginning.
+`--check` reports Python paths/versions, OS, L4T, CUDA/TensorRT packages, power mode, swap, RAM, free disk, text dependencies, camera preparation and responding cameras. Detection does not change clocks, power mode, swap, CUDA or OS settings. The diagnostic command can run on an unsupported platform; installation remains restricted to the original Nano / L4T R32.
 
-To change model, stop the server with Ctrl+C, download the desired model, and restart:
+## Camera and demo controls
+
+Camera discovery checks capture devices and attempts a frame with a timeout. It supports USB V4L2 devices and a detected CSI sensor through Argus; a manual URI or video path can be entered if automatic discovery misses the device. Discovery frames are not saved.
+
+Keep the camera fixed for the object hunt. If no camera works, use Text Conversation. Model outputs and detector labels may be wrong; the object hunt scores detections rather than accepting an LLM's claim of success.
+
+Ctrl+C cancels an active demo and returns to the menu. Session logs and generated outputs are saved under `runs/`. Resource checks, bounded execution and server cleanup reduce failure risk, but do not replace rehearsal on the actual board.
+
+## Full catalogue and reference material
+
+The previous catalogue remains available with its original option numbers:
 
 ```bash
-python3 scripts/download.py qwen05-q4
-python3 scripts/serve.py --model qwen05-q4
+bash scripts/run_demo.sh --all
 ```
 
-Only one LLM should run at a time on the board. Keep the server context and the client's `config.json` context consistent. `--model-file /path/to/adapted.gguf` accepts a locally exported model supported by the pinned runtime.
+Its setup prepares additional models and all four camera modes, so it needs more storage. The bundled RAG notes and evaluation prompts provide sample inputs. Historical speech/training code is outside the default three-demo setup.
 
-## 4. Structured output and a calculator tool
+- [Full experiment catalogue](docs/EXPERIMENTS.md)
+- [Manual commands and historical workflows](docs/MANUAL-REFERENCE.md)
+- [Camera implementation and setup](docs/VISION.md)
+- [Compatibility notes](docs/COMPATIBILITY.md)
+- [Validation record](docs/VALIDATION.md)
+- [Presentation](docs/Jetson_Nano_Local_AI_Experiments.pptx) and [terminal walkthrough](docs/media/jetson-nano-setup.mp4)—these describe the earlier full menu; use the commands and compact menu above for the current default.
 
-```bash
-python3 labs/extract.py "NVIDIA released JetPack 4.6.6 in November 2024."
-python3 labs/calculator.py "Multiply 12 by 7."
-```
+The software has regression tests for the launcher, interpreter selection, storage reporting and demo logic. CI includes Python 3.6, 3.9 and 3.11.3. These checks do not establish physical Nano, TensorRT or camera success.
 
-The extraction script requests bounded JSON arrays, parses the result, and checks that every extracted value appears verbatim in the source. A grounding failure gives a nonzero exit code. This catches invented values, but does not establish that every category or omission is correct. The tiny default model may fail this example: that is a model-quality result, not something the script conceals.
+## Repository layout
 
-The calculator asks the model for one arithmetic operation, validates the operation and numeric bounds, then computes with Python operators. It never executes model-generated Python or shell commands. A valid tool call can still represent a misunderstood question.
+| Path | Contents |
+|---|---|
+| `scripts/run_demo.sh` | Interpreter selection and menu entry point |
+| `scripts/demo_menu.py` | Compact and full menus, setup and supervision |
+| `scripts/check_board.py` | System configuration report |
+| `scripts/storage_report.py` | File, package and disk-space analysis |
+| `scripts/readiness.py` | Dependency and camera checks |
+| `models.json` | Pinned text model downloads and checksums |
+| `config.json` | Runtime/client settings; compact menu selects the 360M model explicitly |
+| `labs/` | Demo implementations |
+| `data/` | Bundled sample inputs |
+| `tests/` | Software regression tests |
+| `runs/` | Generated logs, results and preparation receipts |
 
-## 5. RAG over your own notes
-
-Copy real UTF-8 `.txt` or `.md` files into `data/notes/`, then:
-
-```bash
-python3 labs/rag.py index
-python3 labs/rag.py ask "What does my document say about the experiment?" --retrieve-only
-python3 labs/rag.py ask "What does my document say about the experiment?"
-```
-
-This is **lexical BM25 retrieval, not semantic embedding search**. It needs no vector database or Python ML dependencies. Defaults are 100-word chunks, 20-word overlap, and two retrieved passages. Retrieved text and source labels print before the answer. The script abstains when all lexical scores are zero. Nonzero similarity does not guarantee sufficient evidence.
-
-For prompt-injection experiments, modify a copy of your notes and observe whether the model follows document instructions. The prompt tells the model to treat evidence as data, but that instruction is not a security guarantee. Plain text extraction from PDF/Word is outside this script.
-
-## 6. Speech recognition and a voice loop
-
-```bash
-python3 labs/speech.py transcribe /path/to/recording.wav --output runs/transcript.txt
-python3 labs/speech.py say "Hello from the Jetson Nano."
-arecord -L
-python3 labs/speech.py assistant --device default --seconds 5
-```
-
-The assistant records one utterance after you press Enter, transcribes it with Whisper, asks the running LLM, and speaks one short answer. It processes these stages sequentially. Use an ALSA capture device from `arecord -L` if `default` does not work. A USB microphone must support the requested 16kHz mono capture or an ALSA plug device must convert it.
-
-**Speech output uses eSpeak NG**, a lightweight non-neural synthesizer. It is an intentional old-Ubuntu baseline. Piper/Kokoro installation and neural TTS are not implemented. The configured Whisper model and default transcription path are **English only**. This is push-to-talk, not wake-word detection, VAD, or streaming recognition. Whisper can generate text for silence/noise, so inspect the displayed transcript.
-
-## 7. TinyStories without a server
-
-```bash
-python3 labs/stories.py --model stories15m --prompt "Once upon a time" --tokens 128
-python3 scripts/download.py stories42m
-python3 labs/stories.py --model stories42m --temperature 0.6 --seed 42
-```
-
-This uses the pinned `llama2.c` tokenizer and model format. `--tokens` controls the upstream program's total generation steps, which includes prompt processing. The upstream model context also limits generation. These are story models, not chat assistants.
-
-## 8. Compare models and settings
-
-Stop the LLM server before the upstream benchmark to avoid competing for memory:
-
-```bash
-python3 scripts/benchmark.py --model smol135-q4 --output runs/smol135-q4-bench.json
-python3 scripts/download.py smol135-q8
-python3 scripts/benchmark.py --model smol135-q8 --output runs/smol135-q8-bench.json
-```
-
-This benchmark measures upstream prompt-processing and token-generation workloads. It does not evaluate answer accuracy. Do not interpret development-Mac speed as Nano speed.
-
-For your own task evaluation, prepare JSONL records containing a `prompt` string and optionally an `expected` string. Start the server and run:
-
-```bash
-python3 labs/evaluate.py /path/to/questions.jsonl --output runs/task-evaluation.jsonl
-```
-
-The result includes actual model responses, server timings, runtime/model metadata, configuration, and a dataset hash. Optional exact-match scoring only fits tasks with a single expected string. It is not a general measure of answer quality. Output files use exclusive creation so an old experiment is not overwritten.
-
-## 9. Training and LoRA
-
-See [docs/TRAINING.md](docs/TRAINING.md):
-
-- `training/tiny_lora.py`: a small character transformer and ordinary LoRA using a compatible PyTorch installation. CPU is the default. This is separate from the dependency-free inference path.
-- `training/finetune_external.py`: LoRA or QLoRA on a separate modern CUDA GPU, plus adapter merging for later GGUF conversion.
-
-Do **not** install `training/requirements-external.txt` on the Nano. Current bitsandbytes CUDA QLoRA does not support the original Nano's CC 5.3 / CUDA 10.2 stack.
-
-## Camera and vision
-
-After core setup, follow [docs/VISION.md](docs/VISION.md):
-
-```bash
-JOBS=2 bash scripts/build_vision.sh
-python3 labs/vision.py detect v4l2:///dev/video0
-```
-
-Detection, classification, segmentation, pose rules and talking-camera examples use the Nano’s legacy TensorRT stack. Vision weights download on first use.
-
-## Layout
-
-```text
-config.json                Small-model and audio defaults
-models.json                Immutable model revisions and checksums
-scripts/                   Platform report, build, download, serve, benchmark
-labs/                      Runnable inference demonstrations
-training/                  Tiny local LoRA and external-GPU adaptation
-docs/COMPATIBILITY.md       Version choices and technical limitations
-docs/TRAINING.md            Training and deployment instructions
-docs/VALIDATION.md          What was actually checked
-.vendor/                   Downloaded upstream runtime sources (generated)
-.tools/                    Private CMake installation if needed (generated)
-models/                    Downloaded weights (generated)
-runs/                      Your results and indexes (generated)
-```
-
-All paths derive from the project directory, so the board code does not contain the development Mac's absolute paths. Keep datasets, prompts, seeds, model revisions, and hardware settings with any reported experiment. Running the code does not prove a scientific hypothesis.
-
-## Licensing
-
-Original project code is MIT licensed; see [LICENSE](LICENSE). Downloaded runtimes and model weights retain their upstream licenses. See [THIRD_PARTY.md](THIRD_PARTY.md).
-
-## Presentation coverage
-
-The included PPT is a 72-topic idea catalogue. See [the checked presentation-to-code coverage guide](docs/CATALOGUE-COVERAGE.md) for all original menu entries, the six new projects, and topics that do not yet have implementations.
-
-Current classroom presentation: [Nano Local AI Experiments](docs/Jetson_Nano_Local_AI_Experiments.pptx). The earlier 72-topic catalogue is an archived ideas reference, not the active demo programme.
-
-Historical speech setup is now explicit opt-in: `WITH_AUDIO=1 bash scripts/install_system.sh`, `WITH_AUDIO=1 bash scripts/build_runtimes.sh`, then `python3 scripts/download.py whisper-tiny-en`. This is outside the current classroom scope.
-
-The classroom PPT uses a light theme and explains the 27 named experiments. Text conversations include **29 Socratic Study Partner** and **30 Mystery Character Interview**. Technical validation notes remain in the slide notes and [validation guide](docs/VALIDATION.md).
-
-### Automatic preparation and board detection
-
-For the full catalogue, run `bash scripts/run_demo.sh --all` after cloning. Its menu 1 installs system dependencies, builds the runtimes, downloads and verifies the text models, indexes the included notes, and prepares all four camera models sequentially. First preparation needs Internet, sudo and at least 6 GiB free working space. No manual model downloads or API keys are required. Keep the downloaded caches on the Nano for offline use.
-
-`bash scripts/run_demo.sh --check` reports OS, L4T, Python, missing/corrupt text assets, camera-model preparation and a working USB/CSI camera if detected. It also works on an unsupported OS to help diagnosis; installation still requires original Nano / L4T R32. Camera discovery captures one frame without saving it, tries available capture devices with timeouts, and allows a manual URI override. Missing cameras are skipped in the prepared sequence.
-
-Selections check core dependencies and offer setup when missing. RAG automatically indexes the bundled sample notes; evaluation defaults to `data/evaluation.jsonl`. Custom notes, prompts and evaluation files remain supported. Python 3.11 can run the menu and text clients; native JetPack camera bindings are checked in both the selected Python and `/usr/bin/python3`, then launched with the working interpreter. Do not replace JetPack's system Python or CUDA to install a demo.
-
-Camera preparation loads each network to download its weights and build its device-specific engine, without opening a camera. Preparation records cache file sizes; these are existence/integrity hints, not a hardware test or cryptographic upstream provenance. Re-run menu 13 > install after changing JetPack, camera libraries or network files. The scripts cannot supply missing JetPack drivers or guarantee compatibility with an unknown OS.
-
-### Two Python commands and limited storage
-
-On the reported board, `python` is 3.11.3 and `python3` is 3.6.9. The Bash launcher now prefers an installed Python 3.11 (`python3.11`, then `python`, then `python3` if it is 3.11), and falls back to `python3`. It never changes system symlinks. Camera bindings run separately in whichever checked interpreter can import them. Both versions are included in software CI. No symlink changes or Python upgrades are needed.
-
-With only about 4 GB free, do not start full setup. Run `bash scripts/run_demo.sh --storage` for a read-only filesystem, partition and directory-size report; run `bash scripts/run_demo.sh --check` for OS/L4T/Python details. Storage scans may be partial where permissions prevent access. Nothing is deleted automatically. Full setup checks for at least 6 GiB free before installation and checks again before camera preparation; this is a minimum headroom check, not a guarantee of total build size. Preserve other users' files and the JetPack installation.
-
-Compact preparation reuses an existing server and downloads only its selected text model. A fresh runtime or camera-library build retains the 6 GiB safety gate; installed camera bindings need at least 1 GiB free to prepare the detector. With 4 GB free, first inspect `--storage` and `--check`; do not assume the presence of Python means the AI runtimes are installed. The storage report lists existing `.gguf`, `.onnx`, `.engine` and `.safetensors` files in your home/repository, subject to permissions and a timeout. It never deletes, loads, moves or trusts unknown models. Models belonging to others are not automatically reused.
-
-### Automatic interpreter and configuration detection
-
-`bash scripts/run_demo.sh` prefers the installed Python 3.11 for the menu and text clients. It checks essential standard-library modules before starting. To explicitly use JetPack Python: `DEMO_PYTHON=/usr/bin/python3 bash scripts/run_demo.sh`. `--check` reports interpreter paths/versions, OS, L4T, CUDA/TensorRT packages, power mode, swap, memory, disk, models and camera readiness. Detection does not change clocks, power mode, swap or system Python.
-
-Use menu **1** for automatic dependency/model preparation, or `bash scripts/run_demo.sh --setup-only`. Missing native runtimes are built sequentially when storage permits; existing verified text weights are reused. Setup needs Internet only for missing packages/sources/models. A skipped camera preparation is printed explicitly; it does not mean all three demos are ready.
-
-**Storage Analyzer:** choose **6** in the compact menu, or run `bash scripts/run_demo.sh --storage`. It reports used/free space, partitions and inode usage; lists large accessible directories in descending size order; and searches for existing model files. A nominal 32 GB card is about 29.8 GiB before filesystem overhead. Timed-out or permission-denied scans are marked incomplete. No cleanup is automatic.
-
-The analyzer also groups allocated file space into model candidates, installed software/libraries, code/Git data, caches, logs, media and other files. It lists the 30 largest individual files and system packages. The bounded root-filesystem scan reads metadata only, counts hardlinks once, avoids other mounts/symlinks and reports inaccessible paths or timeouts. Categories are filename/path heuristics; package figures overlap with file totals and must not be added to them.
+Project code is MIT licensed; see [LICENSE](LICENSE). Downloaded runtimes and models retain their upstream licenses: [THIRD_PARTY.md](THIRD_PARTY.md).
