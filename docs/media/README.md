@@ -14,3 +14,5 @@ Image source: [NVIDIA Jetson Nano product development](https://www.nvidia.com/en
 Original image URL: https://www.nvidia.com/content/nvidiaGDC/us/en_US/autonomous-machines/embedded-systems/jetson-nano/product-development/_jcr_content/root/responsivegrid/nv_container_1169488117/nv_container_copy/nv_image.coreimg.jpeg/1710770678070/jetson-nano-2560x1440.jpeg
 
 Copy correction, 2026-09-23: remove promotional kickers, experiment-count badges, “named experiments”, “one Bash launcher”, classroom/audience narration, and repetitive invitations from all visible slides. Keep subject titles, hardware/software specifications, experiment names, functional descriptions and necessary run commands. Use plain technical section headings. Do not add filler to occupy whitespace.
+
+2026-09-24: The active presentation now covers only the compact menu's Text Conversation (3), Camera Object Detection (4), and Camera-Guided Object Hunt (5). Seven slides retain the white background and plain subject headings. The bundled PDF matches the PPTX. Menu 7 / --ppt opens a desktop viewer. The older video still describes the full menu and is identified as such in README.md.

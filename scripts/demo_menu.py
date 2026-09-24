@@ -360,6 +360,7 @@ JETSON NANO
  4  Camera Object Detection
  5  Camera-Guided Object Hunt
  6  Storage Analyzer
+ 7  Open Presentation
  0  Exit
 Ctrl+C cancels and returns here.
 """
@@ -422,13 +423,16 @@ class CompactMenu(Menu):
             source = self.camera_source()
             output = 'display://0' if os.environ.get('DISPLAY') else str(self.s.session / 'detection.mp4')
             self.s.run([executable, 'labs/vision.py', 'detect', source, output, '--frames', '300'], timeout=1800)
+        elif choice == '7':
+            from open_presentation import open_presentation
+            open_presentation()
         elif choice == '6':
             self.py('scripts/storage_report.py', timeout=600, monitor=False)
         elif choice == '5':
             self.setup_text()
             self.camera_projects(mode='hunt')
         else:
-            raise DemoError('Choose 0–6 from this menu.')
+            raise DemoError('Choose 0–7 from this menu.')
 
 
 MENU = '''
@@ -473,12 +477,17 @@ Enter the experiment number. Ctrl+C cancels and returns here.
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--ppt', action='store_true', help='Open the bundled presentation')
     parser.add_argument('--all', action='store_true', help='Open the full experiment catalogue')
     parser.add_argument('--storage', action='store_true', help='Read-only disk and directory usage report')
     parser.add_argument('--list', action='store_true', help='List named experiments without starting hardware or models')
     parser.add_argument('--setup-only', action='store_true', help='Prepare core dependencies and exit')
     parser.add_argument('--check', action='store_true', help='Read-only board report, no demos')
     args = parser.parse_args()
+    if args.ppt:
+        from open_presentation import open_presentation
+        open_presentation()
+        return
     if args.storage:
         from storage_report import main as storage_main
         storage_main()
@@ -526,7 +535,7 @@ def main():
                     print('\nCancelled. Returning to menu.')
                 except EOFError:
                     break
-                except (DemoError, OSError, ValueError, subprocess.SubprocessError) as error:
+                except (DemoError, OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
                     print('\nDemo stopped: {}\nFix the issue and select again; the menu remains open.'.format(error))
                 finally:
                     supervisor.stop_server()
@@ -537,6 +546,6 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except (DemoError, OSError, ValueError, subprocess.SubprocessError) as error:
+    except (DemoError, OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
         print('Cannot start: {}'.format(error), file=sys.stderr)
         sys.exit(1)

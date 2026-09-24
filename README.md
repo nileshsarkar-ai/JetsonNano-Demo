@@ -28,6 +28,7 @@ The Bash command selects Python, checks the board and opens this menu:
 | 4 | Camera Object Detection |
 | 5 | Camera-Guided Object Hunt |
 | 6 | Storage Analyzer |
+| 7 | Open Presentation |
 | 0 | Exit |
 
 **Text Conversation** uses SmolLM2-360M Instruct Q4, a roughly **258 MiB** download. **Camera Object Detection** uses SSD-Mobilenet-v2 through JetPack's TensorRT stack. **Camera-Guided Object Hunt** shares those two models: the LLM proposes objects to find, and camera detections determine which have been found. This is a detector-plus-LLM application, not a trained VLA robot policy.
@@ -105,7 +106,8 @@ Its setup prepares additional models and all four camera modes, so it needs more
 - [Camera implementation and setup](docs/VISION.md)
 - [Compatibility notes](docs/COMPATIBILITY.md)
 - [Validation record](docs/VALIDATION.md)
-- [Presentation](docs/Jetson_Nano_Local_AI_Experiments.pptx) and [terminal walkthrough](docs/media/jetson-nano-setup.mp4)—these describe the earlier full menu; use the commands and compact menu above for the current default.
+- [Presentation](docs/Jetson_Nano_Local_AI_Experiments.pptx) and [PDF copy](docs/Jetson_Nano_Local_AI_Experiments.pdf) cover the current three demos.
+- The [terminal walkthrough](docs/media/jetson-nano-setup.mp4) still shows the earlier full menu. Use this README for current option numbers.
 
 The software has regression tests for the launcher, interpreter selection, storage reporting and demo logic. CI includes Python 3.6, 3.9 and 3.11.3. These checks do not establish physical Nano, TensorRT or camera success.
 
@@ -126,3 +128,13 @@ The software has regression tests for the launcher, interpreter selection, stora
 | `runs/` | Generated logs, results and preparation receipts |
 
 Project code is MIT licensed; see [LICENSE](LICENSE). Downloaded runtimes and models retain their upstream licenses: [THIRD_PARTY.md](THIRD_PARTY.md).
+
+## Open the presentation from the terminal
+
+Choose **7** in the menu, or run:
+
+```bash
+bash scripts/run_demo.sh --ppt
+```
+
+On the Nano desktop this launches an installed LibreOffice/Impress in slideshow mode. If LibreOffice is absent, it asks the desktop to open the bundled PDF. A viewer must already be installed; the command does not download office software. An SSH session without a graphical display prints the file location instead. The PPTX and PDF both describe only the three default demos.
