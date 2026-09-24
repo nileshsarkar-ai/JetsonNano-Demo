@@ -15,3 +15,7 @@ The browser uses cameras exposed by its operating system. USB webcams usually ex
 Preview remains in the browser. Explicit analysis sends a JPEG snapshot (maximum 480 pixels wide) to the server and hosted model API. The application does not save frames. Modes: Quick scene labels (people, objects and actions), Scene scientist, Read and explain, Invent with objects, Robot planner. Robot planner only describes hypothetical steps; it cannot control hardware.
 
 Deployment verification: public image endpoint returned a description of the supplied board photograph. Actual Jetson camera capture remains to be verified on that device.
+
+## Current Q&A with web search
+
+Enable “Search the web for current answers” before sending a question. Only the latest question is sent to the search service; the model receives up to five result snippets with numbered sources, and the portal renders clickable source links. This is snippet-based search, not full-page browsing. Dates and relevance still need judgment. A 22-second subprocess timeout bounds search; failures are surfaced explicitly instead of claiming current verification. External snippets are marked untrusted and cannot authorize tool actions. Install `python3 -m pip install -r requirements.txt` in the serving environment before starting. Camera analysis does not invoke search.
