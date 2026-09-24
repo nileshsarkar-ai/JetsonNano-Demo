@@ -15,6 +15,11 @@ import demo_menu
 
 
 class ProjectTests(unittest.TestCase):
+    def setUp(self):
+        patcher = mock.patch.object(demo_menu, 'core_missing', return_value=[])
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_named_project_numbers_dispatch_directly(self):
         supervisor = mock.Mock(config=json.loads((ROOT / 'config.json').read_text()))
         menu = demo_menu.Menu(supervisor)
@@ -81,7 +86,7 @@ class ProjectTests(unittest.TestCase):
         menu = demo_menu.Menu(supervisor)
         with mock.patch.object(demo_menu, 'prompt', return_value='tour'):
             with mock.patch.object(menu, 'llm'), mock.patch.object(menu, 'py') as run:
-                with mock.patch.object(demo_menu.importlib.util, 'find_spec', return_value=None):
+                with mock.patch.object(demo_menu, 'detect_camera', return_value=None):
                     with mock.patch.object(menu, 'camera_projects') as camera:
                         menu.showcase()
                         camera.assert_not_called()
@@ -92,8 +97,8 @@ class ProjectTests(unittest.TestCase):
         menu = demo_menu.Menu(supervisor)
         with mock.patch.object(demo_menu, 'prompt', return_value='tour'):
             with mock.patch.object(menu, 'llm'), mock.patch.object(menu, 'py'):
-                with mock.patch.object(Path, 'exists', return_value=True):
-                    with mock.patch.object(demo_menu.importlib.util, 'find_spec', return_value=object()):
+                with mock.patch.object(demo_menu, 'detect_camera', return_value='csi://0'):
+                    with mock.patch.object(demo_menu, 'vision_python', return_value='/usr/bin/python3'), mock.patch.object(demo_menu, 'vision_ready', return_value=True):
                         with mock.patch.object(menu, 'camera_projects', side_effect=demo_menu.DemoError('camera unavailable')) as camera:
                             menu.showcase()
                             camera.assert_called_once()

@@ -1,0 +1,4 @@
+Example exhibit notes (fictional demonstration data)
+Ocean Watch uses a temperature sensor to record water temperature once per minute. Its display shows the latest reading and a daily average.
+Forest Sound maps recorded bird calls to species labels. Its example data comes from archived recordings, not a live microphone.
+The museum opens at 09:00 and closes at 17:00. Guided visits start at 10:00 and 14:00.

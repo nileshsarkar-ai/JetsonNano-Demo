@@ -13,6 +13,7 @@ import sys
 import time
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'labs'))
 from camera_tasks import summarize_frames, records_from_log, compare, quest_score
+from readiness import core_missing, vision_python, detect_camera, vision_ready, VISION_MODES
 from demo_runtime import DemoError, ROOT, Supervisor, available_memory, resource_check, temperature
 
 
@@ -24,8 +25,8 @@ def prompt(label, default=None):
     return value
 
 
-def file_prompt(label):
-    path = Path(prompt(label)).expanduser().resolve()
+def file_prompt(label, default=None):
+    path = Path(prompt(label, default)).expanduser().resolve()
     if not path.is_file():
         raise DemoError('File not found: {}'.format(path))
     if path.stat().st_size > 64 * 1024 ** 2:
@@ -86,7 +87,7 @@ class Menu:
     def setup(self):
         resource_check(start=True)
         if shutil.disk_usage(str(ROOT)).free < 6 * 1024 ** 3:
-            raise DemoError('Setup requires at least 6 GiB free disk headroom. Free space and retry.')
+            raise DemoError('Setup requires at least 6 GiB free disk headroom. Run bash scripts/run_demo.sh --storage to inspect usage; nothing has been installed.')
         jobs = os.environ.get('JOBS', '1')
         if jobs not in ('1', '2'):
             raise DemoError('Use JOBS=1 (recommended) or JOBS=2 on this board.')
@@ -95,7 +96,44 @@ class Menu:
         self.s.run(['env', 'JOBS=' + jobs, 'bash', 'scripts/build_runtimes.sh'], timeout=14400)
         self.py('scripts/download.py', self.s.config['model'],
                 'stories15m', 'smol360-q4', timeout=7200)
-        print('Core preparation completed. Select 2, then an experiment number (15–20). Optional camera setup: 13 > install.')
+        self.py('labs/rag.py', 'index', '--notes', str(ROOT / 'data/notes'))
+        self.prepare_vision()
+        missing = core_missing(verify=True)
+        if missing:
+            raise DemoError('Preparation incomplete: ' + ', '.join(missing))
+        print('Core preparation verified. Camera:', detect_camera() or 'not detected; text demos remain available.')
+
+    def prepare_vision(self):
+        resource_check(start=True)
+        if shutil.disk_usage(str(ROOT)).free < 6 * 1024 ** 3:
+            raise DemoError('Vision preparation needs 6 GiB free disk space.')
+        if not vision_python():
+            self.s.run(['env', 'JOBS=1', 'bash', 'scripts/build_vision.sh'], monitor=False, terminal=True)
+        executable = vision_python()
+        if not executable:
+            raise DemoError('Native camera bindings cannot import in either Python. Check the JetPack installation.')
+        for mode in VISION_MODES:
+            self.s.run([executable, 'labs/vision.py', mode, '--prepare'], timeout=3600)
+        print('Camera models prepared. Camera:', detect_camera() or 'not detected')
+
+    def camera_source(self, automatic=False):
+        detected = detect_camera()
+        if detected:
+            print('Detected working camera:', detected)
+        if automatic:
+            if not detected:
+                raise DemoError('No working camera detected; camera stage skipped.')
+            return detected
+        return prompt('Camera URI (or video path)', detected)
+
+    def ensure_vision(self, mode):
+        executable = vision_python()
+        if not executable or not vision_ready(mode):
+            if prompt('Camera software/model needs preparation. Prepare now? yes / no', 'yes').lower() != 'yes':
+                raise DemoError('Camera stage skipped.')
+            self.prepare_vision()
+            executable = vision_python()
+        return executable
 
     def status(self):
         self.py('scripts/check_board.py', '--strict', monitor=False)
@@ -111,6 +149,12 @@ class Menu:
             print('{}: {}'.format(name, shutil.which(name) or 'MISSING'))
         for module in ('jetson_inference', 'jetson_utils'):
             print('{}: {}'.format(module, 'installed' if importlib.util.find_spec(module) else 'optional / missing'))
+        print('Menu Python:', sys.version.split()[0], sys.executable)
+        print('Camera Python:', vision_python() or 'not installed')
+        print('Camera:', detect_camera() or 'none responding')
+        print('Core missing/corrupt:', ', '.join(core_missing(verify=True)) or 'none')
+        for mode in VISION_MODES:
+            print('Camera {}: {}'.format(mode, 'prepared' if vision_ready(mode) else 'needs preparation'))
         print('Logs:', self.s.session)
         print('Select a named experiment to begin.')
 
@@ -125,7 +169,7 @@ class Menu:
             self.py('labs/rag.py', 'index', '--notes', str(directory))
         elif mode in ('retrieve', 'ask'):
             if not (ROOT / 'runs/rag-index.json').is_file():
-                raise DemoError('Index your notes first using RAG > index.')
+                self.py('labs/rag.py', 'index', '--notes', str(ROOT / 'data/notes'))
             question = prompt('Question')
             if mode == 'ask':
                 self.llm()
@@ -137,33 +181,26 @@ class Menu:
     def vision(self):
         mode = prompt('Vision: install / detect / classify / pose / segment', 'detect')
         if mode == 'install':
-            print('Optional TensorRT setup needs Internet, sudo, and substantial build time.')
-            resource_check(start=True)
-            if shutil.disk_usage(str(ROOT)).free < 6 * 1024 ** 3:
-                raise DemoError('Vision setup needs at least 6 GiB free disk headroom.')
-            self.s.run(['env', 'JOBS=1', 'bash', 'scripts/build_vision.sh'], monitor=False, terminal=True)
+            self.prepare_vision()
             return
         if mode not in ('detect', 'classify', 'pose', 'segment'):
             raise DemoError('Unknown vision mode.')
-        if any(importlib.util.find_spec(x) is None for x in ('jetson_inference', 'jetson_utils')):
-            raise DemoError('Install optional vision bindings first: Vision > install.')
-        source = prompt('Camera URI or video path', 'v4l2:///dev/video0')
+        executable = self.ensure_vision(mode)
+        source = self.camera_source()
         if source.startswith('v4l2://') and not Path(source[len('v4l2://'):]).exists():
             raise DemoError('Camera device does not exist. Check connection and camera URI.')
         output = prompt('Output URI (use a file path on headless boards)', 'display://0' if os.environ.get('DISPLAY') else str(self.s.session / ('vision-{}.mp4'.format(self.s.counter + 1))))
         frames = number('Maximum frames', 300, 1, 3000)
         args = ['--frames', frames]
-        print('First model load may download weights and compile a TensorRT engine. Rehearse beforehand.')
-        self.py('labs/vision.py', mode, source, output, *args, timeout=1800)
+        self.s.run([executable, 'labs/vision.py', mode, source, output] + args, timeout=1800)
 
     def capture_snapshot(self, source):
-        if any(importlib.util.find_spec(x) is None for x in ('jetson_inference', 'jetson_utils')):
-            raise DemoError('Vision unavailable. Prepare it using Utilities > 13 > install; text projects still work.')
+        executable = self.ensure_vision('detect')
         if source.startswith('v4l2://') and not Path(source[len('v4l2://'):]).exists():
             raise DemoError('Camera device unavailable; skipping camera project.')
         # Every call finishes and releases TensorRT before the next LLM load.
         output = 'display://0' if os.environ.get('DISPLAY') else str(self.s.session / ('sample-{}.mp4'.format(self.s.counter + 1)))
-        self.py('labs/vision.py', 'detect', source, output, '--frames', '5', '--interval', '0.4', timeout=120)
+        self.s.run([executable, 'labs/vision.py', 'detect', source, output, '--frames', '5', '--interval', '0.4'], timeout=120)
         snapshot = summarize_frames(records_from_log(self.s.session / '{:03d}.log'.format(self.s.counter)))
         path = self.s.session / ('snapshot-{}.json'.format(self.s.counter))
         path.write_text(json.dumps(snapshot, indent=2))
@@ -177,7 +214,7 @@ class Menu:
         mode = mode or ('journal' if automatic else prompt('Camera project', 'memory').lower())
         if mode not in ('memory', 'hunt', 'journal'):
             raise DemoError('Choose memory, hunt or journal.')
-        source = 'v4l2:///dev/video0' if automatic else prompt('Camera URI', 'v4l2:///dev/video0')
+        source = self.camera_source(automatic)
         history = []
         # Establish camera viability before asking the model to create a quest.
         history.append(self.capture_snapshot(source))
@@ -237,8 +274,7 @@ class Menu:
             print('\n=== STORY DIRECTOR ===', flush=True)
             self.py('labs/projects.py', 'story', '--auto')
             self.s.stop_server()
-            if (Path('/dev/video0').exists() and
-                    all(importlib.util.find_spec(x) is not None for x in ('jetson_inference', 'jetson_utils'))):
+            if detect_camera() and vision_python() and vision_ready('detect'):
                 try:
                     self.camera_projects(automatic=True)
                 except (DemoError, OSError, ValueError) as error:
@@ -246,7 +282,7 @@ class Menu:
                 finally:
                     self.s.stop_server()
             else:
-                print('Optional camera skipped: no prepared /dev/video0 camera and vision bindings.')
+                print('Optional camera skipped: no working camera or prepared vision model.')
             print('Tour complete. Text outputs came from the local model; skipped stages were reported.')
         else:
             args = []
@@ -261,6 +297,13 @@ class Menu:
                 str(self.s.session / ('text-experiment-{}.jsonl'.format(self.s.counter + 1))), timeout=1200)
 
     def action(self, choice):
+        if choice.isdigit() and 3 <= int(choice) <= 30 and choice != '13':
+            missing = core_missing()
+            if missing:
+                print('Missing dependencies:', ', '.join(missing))
+                if prompt('Run setup now? yes / no', 'yes').lower() != 'yes':
+                    raise DemoError('Selection cancelled; setup is available as menu 1.')
+                self.setup()
         text_modes = {'9': 'memory', '14': 'sampling', '22': 'prompts', '23': 'fewshot',
                       '24': 'triage', '25': 'summary', '26': 'injection', '27': 'abstain', '28': 'context', '29': 'tutor', '30': 'mystery'}
         if choice in text_modes:
@@ -302,7 +345,7 @@ class Menu:
             self.py('scripts/benchmark.py', '--model', self.s.config['model'], '--repetitions', '1',
                     '--output', str(self.s.session / ('benchmark-{}.json'.format(self.s.counter + 1))), timeout=1800)
         elif choice == '12':
-            dataset = file_prompt('Evaluation JSONL file')
+            dataset = file_prompt('Evaluation JSONL file', str(ROOT / 'data/evaluation.jsonl'))
             self.llm()
             self.py('labs/evaluate.py', dataset, '--output', str(self.s.session / ('evaluation-{}.jsonl'.format(self.s.counter + 1))), timeout=3600)
         elif choice == '13': self.vision()
@@ -312,7 +355,7 @@ class Menu:
 MENU = '''
 LOCAL AI ON JETSON NANO
 SETUP
- 1  Prepare core dependencies and models
+ 1  Prepare dependencies, models and sample data
  2  Board health and dependency report
 LANGUAGE AND ASSISTANTS
  3  Offline Conversation Assistant
@@ -351,19 +394,29 @@ Enter the experiment number. Ctrl+C cancels and returns here.
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--storage', action='store_true', help='Read-only disk and directory usage report')
     parser.add_argument('--list', action='store_true', help='List named experiments without starting hardware or models')
     parser.add_argument('--setup-only', action='store_true', help='Prepare core dependencies and exit')
     parser.add_argument('--check', action='store_true', help='Read-only board report, no demos')
     args = parser.parse_args()
+    if args.storage:
+        from storage_report import main as storage_main
+        storage_main()
+        return
     if args.list:
         print(MENU)
         return
     if sys.version_info < (3, 6):
         raise SystemExit('Python 3.6 or newer is required; keep JetPack system Python.')
     os.chdir(str(ROOT))
-    subprocess.run([sys.executable, 'scripts/check_board.py', '--strict'], check=True)
+    subprocess.run([sys.executable, 'scripts/check_board.py'] + ([] if args.check else ['--strict']), check=True)
     if args.check:
         print('Available RAM (MiB):', available_memory(), 'Temperature (C):', temperature())
+        print('Core missing/corrupt:', ', '.join(core_missing(verify=True)) or 'none')
+        print('Camera Python:', vision_python() or 'not installed')
+        print('Camera:', detect_camera() or 'none responding')
+        for mode in VISION_MODES:
+            print('Camera {}: {}'.format(mode, 'prepared' if vision_ready(mode) else 'needs preparation'))
         return
     if not args.setup_only and not sys.stdin.isatty():
         raise SystemExit('The menu needs an interactive terminal. Use --setup-only for preparation.')

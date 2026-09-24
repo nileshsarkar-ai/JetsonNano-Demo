@@ -8,7 +8,7 @@ The student showcase includes an LLM tool-planning assistant, a document detecti
 
 ## One-command demo menu
 
-On the original Nano with JetPack 4 / Ubuntu 18.04 and system Python 3.6:
+On the original Nano with JetPack 4 / Ubuntu 18.04 with Python 3.6 or newer (including 3.11):
 
 ```bash
 git clone https://github.com/nileshsarkar-ai/JetsonNano-Demo.git
@@ -212,3 +212,19 @@ Current classroom presentation: [Nano Local AI Experiments](docs/Jetson_Nano_Loc
 Historical speech setup is now explicit opt-in: `WITH_AUDIO=1 bash scripts/install_system.sh`, `WITH_AUDIO=1 bash scripts/build_runtimes.sh`, then `python3 scripts/download.py whisper-tiny-en`. This is outside the current classroom scope.
 
 The classroom PPT uses a light theme and explains the 27 named experiments. Text conversations include **29 Socratic Study Partner** and **30 Mystery Character Interview**. Technical validation notes remain in the slide notes and [validation guide](docs/VALIDATION.md).
+
+### Automatic preparation and board detection
+
+Run `bash scripts/run_demo.sh` after cloning. Menu 1 installs system dependencies, builds the runtimes, downloads and verifies the text models, indexes the included notes, and prepares all four camera models sequentially. First preparation needs Internet, sudo and at least 6 GiB free working space. No manual model downloads or API keys are required. Keep the downloaded caches on the Nano for offline use.
+
+`bash scripts/run_demo.sh --check` reports OS, L4T, Python, missing/corrupt text assets, camera-model preparation and a working USB/CSI camera if detected. It also works on an unsupported OS to help diagnosis; installation still requires original Nano / L4T R32. Camera discovery captures one frame without saving it, tries available capture devices with timeouts, and allows a manual URI override. Missing cameras are skipped in the prepared sequence.
+
+Selections check core dependencies and offer setup when missing. RAG automatically indexes the bundled sample notes; evaluation defaults to `data/evaluation.jsonl`. Custom notes, prompts and evaluation files remain supported. Python 3.11 can run the menu and text clients; native JetPack camera bindings are checked in both the selected Python and `/usr/bin/python3`, then launched with the working interpreter. Do not replace JetPack's system Python or CUDA to install a demo.
+
+Camera preparation loads each network to download its weights and build its device-specific engine, without opening a camera. Preparation records cache file sizes; these are existence/integrity hints, not a hardware test or cryptographic upstream provenance. Re-run menu 13 > install after changing JetPack, camera libraries or network files. The scripts cannot supply missing JetPack drivers or guarantee compatibility with an unknown OS.
+
+### Two Python commands and limited storage
+
+On the reported board, `python` is 3.11.3 and `python3` is 3.6.9. The Bash launcher intentionally invokes `python3`, preserving JetPack's system environment. Both versions are included in software CI. No symlink changes or Python upgrades are needed.
+
+With only about 4 GB free, do not start full setup. Run `bash scripts/run_demo.sh --storage` for a read-only filesystem, partition and directory-size report; run `bash scripts/run_demo.sh --check` for OS/L4T/Python details. Storage scans may be partial where permissions prevent access. Nothing is deleted automatically. Full setup checks for at least 6 GiB free before installation and checks again before camera preparation; this is a minimum headroom check, not a guarantee of total build size. Preserve other users' files and the JetPack installation.

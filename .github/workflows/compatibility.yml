@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        image: ['python:3.6.15-buster', 'python:3.9-bullseye']
+        image: ['python:3.6.15-buster', 'python:3.9-bullseye', 'python:3.11.3-bullseye']
     steps:
       - uses: actions/checkout@v4
       - name: Bash syntax

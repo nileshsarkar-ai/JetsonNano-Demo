@@ -1,0 +1,3 @@
+{"prompt":"Reply with only the last word in this sentence: The telescope is blue","expected":"blue"}
+{"prompt":"Classify this message as positive or negative. Reply with one word: I loved the exhibition.","expected":"positive"}
+{"prompt":"From this note, reply with only the opening time: The museum opens at 09:00 and closes at 17:00.","expected":"09:00"}

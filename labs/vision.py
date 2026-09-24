@@ -4,6 +4,7 @@ import argparse
 import json
 import subprocess
 import time
+from pathlib import Path
 
 
 def main():
@@ -12,6 +13,7 @@ def main():
     p.add_argument('input', nargs='?', default='v4l2:///dev/video0')
     p.add_argument('output', nargs='?', default='display://0')
     p.add_argument('--network', default=None)
+    p.add_argument('--prepare', action='store_true', help='Download model and build engine, without opening a camera')
     p.add_argument('--threshold', type=float, default=0.5)
     p.add_argument('--frames', type=int, default=0, help='0 means until stream ends')
     p.add_argument('--interval', type=float, default=0, help='Minimum seconds between processed frames')
@@ -34,6 +36,18 @@ def main():
     else:
         net = segNet(name, argv)
         net.SetOverlayAlpha(150.0)
+    if a.prepare:
+        root = Path(__file__).resolve().parents[1]
+        networks = root / '.vendor/jetson-inference/data/networks'
+        files = {str(p.resolve()): p.stat().st_size for p in networks.rglob('*')
+                 if p.is_file() and p.stat().st_size > 0}
+        if not files:
+            raise RuntimeError('No cached network files found; preparation cannot be certified.')
+        (root / 'runs').mkdir(exist_ok=True)
+        receipt = root / 'runs' / ('vision-ready-' + a.mode + '.json')
+        receipt.write_text(json.dumps(files, indent=2))
+        print('Prepared ' + a.mode + '; camera not opened.')
+        return
     source = videoSource(a.input, argv=argv)
     output = videoOutput(a.output, argv=argv)
     overlay = None

@@ -9,7 +9,7 @@ sudo apt-get install -y build-essential git cmake wget ca-certificates libglew-d
  gstreamer1.0-libav gstreamer1.0-nice libgstreamer1.0-dev libgstrtspserver-1.0-dev \
  libglib2.0-dev libsoup2.4-dev libjson-glib-dev qtbase5-dev avahi-utils \
  libgstreamer-plugins-base1.0-dev libgstreamer-plugins-good1.0-dev \
- libgstreamer-plugins-bad1.0-dev libpython3-dev python3-numpy espeak-ng
+ libgstreamer-plugins-bad1.0-dev libpython3-dev python3-numpy
 cd "$PROJECT_ROOT"
 source "$PROJECT_ROOT/scripts/checkout_source.sh"
 mkdir -p .vendor
@@ -32,4 +32,4 @@ cd .vendor/jetson-inference/build
 "$CMAKE_BIN" --build . -- -j"${JOBS:-2}"
 sudo "$CMAKE_BIN" --build . --target install
 sudo ldconfig
-python3 -c 'import jetson_inference, jetson_utils; print("Vision bindings imported")'
+/usr/bin/python3 -c 'import jetson_inference, jetson_utils; print("Vision bindings imported")'

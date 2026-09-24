@@ -123,7 +123,7 @@ class MenuTests(unittest.TestCase):
 
     def test_missing_input_before_server(self):
         supervisor = mock.Mock(config=json.loads((ROOT / 'config.json').read_text()))
-        with mock.patch('builtins.input', return_value='/does/not/exist'):
+        with mock.patch('builtins.input', return_value='/does/not/exist'), mock.patch.object(menu, 'core_missing', return_value=[]):
             with self.assertRaises(runtime.DemoError):
                 menu.Menu(supervisor).action('12')
         supervisor.start_server.assert_not_called()

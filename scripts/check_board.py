@@ -5,6 +5,7 @@ import json
 import platform
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -22,7 +23,9 @@ def main():
     mem = read('/proc/meminfo') or ''
     report = {'model': model, 'architecture': platform.machine(),
               'os': read('/etc/os-release'), 'l4t': release,
-              'python': platform.python_version(),
+              'python': platform.python_version(), 'python_executable': sys.executable,
+              'python_commands': {name: shutil.which(name) for name in ('python', 'python3')},
+              'disk_free_gib': round(shutil.disk_usage(str(Path(__file__).resolve().parents[1])).free / 1024 ** 3, 2),
               'memory': [x for x in mem.splitlines() if x.startswith(('MemTotal:', 'MemAvailable:', 'SwapTotal:'))],
               'executables': {x: shutil.which(x) for x in ['gcc-8', 'g++-8', 'cmake', 'git', 'ffmpeg', 'arecord', 'espeak-ng', 'tegrastats']}}
     if Path('/usr/local/cuda/bin/nvcc').exists():
