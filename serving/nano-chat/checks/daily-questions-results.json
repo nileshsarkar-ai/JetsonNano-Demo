@@ -1,0 +1,74 @@
+{
+  "date": "2026-09-24",
+  "initial": [
+    {
+      "question": "What day is it today?",
+      "seconds": 3.7,
+      "search": null,
+      "answered": true
+    },
+    {
+      "question": "How do I boil an egg? Give simple steps.",
+      "seconds": 4.3,
+      "search": "Live search completed",
+      "answered": true
+    },
+    {
+      "question": "If I buy 3 notebooks at 40 rupees each and pay 200 rupees, what change do I get?",
+      "seconds": 1.9,
+      "search": "Live search unavailable; current facts could not be verified",
+      "answered": true
+    },
+    {
+      "question": "Suggest a quick vegetarian breakfast using bread and tomatoes.",
+      "seconds": 3.0,
+      "search": "Live search unavailable; current facts could not be verified",
+      "answered": true
+    },
+    {
+      "question": "What is the weather in Bengaluru today?",
+      "seconds": 2.0,
+      "search": "Live search unavailable; current facts could not be verified",
+      "answered": true
+    },
+    {
+      "question": "What are the latest headlines in India today? Give dates and sources.",
+      "seconds": 2.0,
+      "search": "Live search unavailable; current facts could not be verified",
+      "answered": true
+    },
+    {
+      "question": "हिंदी में बताओ: पढ़ाई पर ध्यान कैसे लगाऊँ? संक्षेप में।",
+      "seconds": 4.0,
+      "search": "Live search unavailable; current facts could not be verified",
+      "answered": true
+    },
+    {
+      "question": "ಕನ್ನಡದಲ್ಲಿ ಹೇಳಿ: ದಿನವನ್ನು ಚೆನ್ನಾಗಿ ಯೋಜಿಸುವುದು ಹೇಗೆ? ಸಂಕ್ಷಿಪ್ತವಾಗಿ.",
+      "seconds": 5.9,
+      "search": "Live search unavailable; current facts could not be verified",
+      "answered": true
+    }
+  ],
+  "retest": [
+    {
+      "question": "What are the latest headlines in India today? Give dates and sources.",
+      "seconds": 6.0,
+      "search": "Live search completed",
+      "sources": 5
+    },
+    {
+      "question": "What is the weather in Bengaluru today?",
+      "seconds": 5.7,
+      "search": "Live search unavailable; current facts could not be verified",
+      "sources": 0
+    }
+  ],
+  "findings": [
+    "Date correct; notebook arithmetic returned 80 rupees; Hindi and Kannada replies produced in requested scripts.",
+    "Cooking answer mixed timing recommendations from different methods; not a guarantee of factual accuracy.",
+    "News search repaired using dated headline feed; five dated sources returned in about six seconds.",
+    "Weather retrieval still unavailable in this test; bot disclosed inability to verify rather than invent current conditions.",
+    "General search providers remain intermittent; fallback engines improve coverage but are not guaranteed."
+  ]
+}
