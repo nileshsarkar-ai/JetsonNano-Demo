@@ -1,6 +1,9 @@
 """Authenticated browser demo; inference uses a server-side hosted API."""
 import base64
 import hmac
+import hashlib
+from http.cookies import SimpleCookie
+from urllib.parse import parse_qs
 import json
 import os
 import threading
@@ -9,13 +12,19 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 CONFIG = json.loads(Path(os.environ.get('DEMO_CONFIG', '/home/nano-demo/access.json')).read_text())
+SESSION = hmac.new(CONFIG['password'].encode(), b'nano-demo-session', hashlib.sha256).hexdigest()
+LOGIN = b'''<!doctype html><meta name=viewport content="width=device-width,initial-scale=1"><title>Jetson Nano Demo</title><body style="background:#f4f7f2;font:18px system-ui;padding:10vh 10vw;color:#18241a"><h1>Jetson Nano Demo</h1><form method=post action=/login><label>Demo password <input name=password type=password required autofocus style="padding:12px;border-radius:8px"></label><button style="padding:12px;background:#76b900;border:0;border-radius:8px">Open demo</button></form></body>'''
 PAGE = Path(__file__).with_name('index.html').read_bytes()
 SLOTS = threading.BoundedSemaphore(3)
 
 class Handler(BaseHTTPRequestHandler):
     def authenticated(self):
         expected = 'Basic ' + base64.b64encode(('demo:' + CONFIG['password']).encode()).decode()
-        return hmac.compare_digest(self.headers.get('Authorization', ''), expected)
+        cookies = SimpleCookie()
+        try: cookies.load(self.headers.get('Cookie', ''))
+        except Exception: pass
+        token = cookies.get('demo_session')
+        return hmac.compare_digest(self.headers.get('Authorization', ''), expected) or (token is not None and hmac.compare_digest(token.value, SESSION))
 
     def reply(self, status, body, kind='application/json'):
         self.send_response(status)
@@ -28,17 +37,28 @@ class Handler(BaseHTTPRequestHandler):
 
     def gate(self):
         if self.authenticated(): return True
-        self.send_response(401)
-        self.send_header('WWW-Authenticate', 'Basic realm="Jetson Nano Demo"')
-        self.end_headers()
+        self.reply(401, b'{"error":"Please refresh and sign in again."}')
         return False
 
     def do_GET(self):
-        if not self.gate(): return
+        if not self.authenticated(): return self.reply(200, LOGIN, 'text/html; charset=utf-8')
         if self.path != '/': return self.reply(404, b'{}')
         self.reply(200, PAGE, 'text/html; charset=utf-8')
 
     def do_POST(self):
+        if self.path == '/login':
+            try:
+                size = int(self.headers.get('Content-Length', '0'))
+                if not 0 < size <= 1024: raise ValueError()
+                password = parse_qs(self.rfile.read(size).decode()).get('password', [''])[0]
+                if not hmac.compare_digest(password, CONFIG['password']):
+                    return self.reply(403, LOGIN + b'<p>Incorrect password. Please try again.</p>', 'text/html; charset=utf-8')
+                self.send_response(303)
+                self.send_header('Set-Cookie', 'demo_session=' + SESSION + '; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=43200')
+                self.send_header('Location', '/')
+                self.end_headers()
+            except (ValueError, UnicodeError): self.reply(400, b'{}')
+            return
         if not self.gate(): return
         if self.path != '/chat': return self.reply(404, b'{}')
         origin = self.headers.get('Origin')
