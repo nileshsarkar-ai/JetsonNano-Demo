@@ -39,3 +39,11 @@ Public test recordings from Wikimedia Commons are embedded with author/license a
 Top-level Chat, Voice and Vision tabs separate controls. Chat and Voice share conversation history and draft input; leaving Voice stops speech/microphone activity, and leaving Vision stops camera/live analysis. Arrow keys, Home and End navigate tabs. Browser checks verified tab visibility, preserved drafts, and no attached camera after switching away during a permission request.
 
 The repeated bounded stress check passed: 3 chat requests completed in ~3.4 seconds; 5 excess requests returned 429; 4 concurrent page loads completed in 0.24–0.29 seconds. Invalid requests, post-burst language responses, image analysis and sourced news passed. Evidence: checks/navigation-stress-2026-10-24.json. This is not a sustained load guarantee or proof of microphone transcription.
+
+### Laptop broadcast
+
+On the source laptop, choose **Vision → Broadcast this laptop** and allow its camera. Other devices opening the portal automatically join the active broadcast. Sent chat messages and replies from the source laptop are shown below the shared camera. Viewers can analyze that camera feed without granting access to their own camera.
+
+This is a public, video-only snapshot stream (up to roughly 3 frames/second, network dependent), not remote desktop or audio streaming. Keep the source page open and laptop awake. **Stop broadcast** ends sharing and closes the camera. The server holds only the latest frame and conversation in memory; viewers lose access after 8 seconds without updates. Only one publisher may broadcast at a time. A reload requires starting the broadcast again.
+
+Verified 24 October 2026: real MacBook camera to a second browser session, automatic joining and chat relay; publish/stop, exclusive publisher, invalid-token/frame rejection, and feed clearing checks passed.

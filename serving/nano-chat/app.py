@@ -5,6 +5,8 @@ import json
 import os
 import re
 import threading
+import time
+import secrets
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -16,6 +18,9 @@ from pathlib import Path
 CONFIG = json.loads(Path(os.environ.get('DEMO_CONFIG', '/home/nano-demo/access.json')).read_text())
 PAGE = Path(__file__).with_name('index.html').read_bytes()
 SLOTS = threading.BoundedSemaphore(3)
+
+BROADCAST = {'token': None, 'frame': '', 'messages': [], 'updated': 0}
+BROADCAST_LOCK = threading.Lock()
 
 class Handler(BaseHTTPRequestHandler):
     def setup(self):
@@ -34,14 +39,49 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
+        if self.path.split('?')[0] == '/broadcast':
+            with BROADCAST_LOCK:
+                active = time.monotonic() - BROADCAST['updated'] < 8
+                data = {'active': active, 'frame': BROADCAST['frame'] if active else '', 'messages': BROADCAST['messages'] if active else []}
+            return self.reply(200, json.dumps(data).encode())
         if self.path != '/': return self.reply(404, b'{}')
         self.reply(200, PAGE, 'text/html; charset=utf-8')
 
     def do_POST(self):
-        if self.path not in ('/chat', '/vision'): return self.reply(404, b'{}')
+        if self.path not in ('/chat', '/vision', '/broadcast'): return self.reply(404, b'{}')
         origin = self.headers.get('Origin')
         if origin and origin != 'https://' + self.headers.get('Host', ''):
             return self.reply(403, b'{}')
+        if self.path == '/broadcast':
+            try:
+                size = int(self.headers.get('Content-Length', '0'))
+                if not 0 < size <= 600000: raise ValueError()
+                body = json.loads(self.rfile.read(size))
+                with BROADCAST_LOCK:
+                    if body.get('action') == 'start':
+                        if BROADCAST['token'] and time.monotonic() - BROADCAST['updated'] < 8:
+                            return self.reply(409, b'{"error":"Another laptop is broadcasting."}')
+                        BROADCAST.update(token=secrets.token_urlsafe(24), frame='', messages=[], updated=time.monotonic())
+                        return self.reply(200, json.dumps({'token': BROADCAST['token']}).encode())
+                    if not BROADCAST['token'] or body.get('token') != BROADCAST['token']:
+                        return self.reply(403, b'{}')
+                    if body.get('action') == 'stop':
+                        BROADCAST.update(token=None, frame='', messages=[], updated=0)
+                    else:
+                        frame = body.get('frame', '')
+                        if not isinstance(frame, str) or not frame.startswith('data:image/jpeg;base64,'): raise ValueError()
+                        raw = base64.b64decode(frame.split(',', 1)[1], validate=True)
+                        if len(raw) > 350000 or not raw.startswith(b'\xff\xd8'): raise ValueError()
+                        msgs = body.get('messages', [])
+                        if not isinstance(msgs, list): raise ValueError()
+                        clean = []
+                        for m in msgs[-12:]:
+                            if not isinstance(m, dict) or m.get('role') not in ('user', 'assistant') or not isinstance(m.get('content'), str): raise ValueError()
+                            clean.append({'role': m['role'], 'content': m['content'][:6000]})
+                        BROADCAST.update(frame=frame, messages=clean, updated=time.monotonic())
+                return self.reply(200, b'{}')
+            except (ValueError, TypeError, AttributeError, binascii.Error):
+                return self.reply(400, b'{}')
         if not SLOTS.acquire(blocking=False):
             return self.reply(429, b'{"error":"Busy; please try again shortly."}')
         try:
