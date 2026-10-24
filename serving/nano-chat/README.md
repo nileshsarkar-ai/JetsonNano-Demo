@@ -19,3 +19,11 @@ Deployment verification: public image endpoint returned a description of the sup
 ## Current Q&A with web search
 
 Enable “Search the web for current answers” before sending a question. Only the latest question is sent to the search service; the model receives up to five result snippets with numbered sources, and the portal renders clickable source links. This is snippet-based search, not full-page browsing. Dates and relevance still need judgment. A 22-second subprocess timeout bounds search; failures are surfaced explicitly instead of claiming current verification. External snippets are marked untrusted and cannot authorize tool actions. Install `python3 -m pip install -r requirements.txt` in the serving environment before starting. Camera analysis does not invoke search.
+
+## Deployment restored — 24 October 2026
+
+Previous instance 514929 was no longer present. Restored repository revision 5857b9f on A30 instance 545595 (IN2), with persistent serving environment `/home/nano-demo/venv` and app `/home/nano-demo/nano-chat/app.py`.
+
+Portal: https://0825ec5455951.notebooksn.jarvislabs.net/
+
+Verified public page HTTP 200, date response (Saturday, 24 October 2026), and news response with source links. Physical camera capture was not retested. Instance left running as requested; compute rate at restoration ₹38.88/hour plus storage and API usage. Configuration secret stays in `/home/nano-demo/access.json`, excluded from Git.
