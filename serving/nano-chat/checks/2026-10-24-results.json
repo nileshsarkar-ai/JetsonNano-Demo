@@ -1,0 +1,139 @@
+{
+  "date": "2026-10-24",
+  "endpoint": "https://0825ec5455951.notebooksn.jarvislabs.net",
+  "checks": {
+    "invalid": [
+      {
+        "status": 400,
+        "seconds": 0.3
+      },
+      {
+        "status": 400,
+        "seconds": 0.18
+      },
+      {
+        "status": 400,
+        "seconds": 0.3
+      },
+      {
+        "status": 400,
+        "seconds": 0.18
+      },
+      {
+        "status": 403,
+        "seconds": 0.32
+      },
+      {
+        "status": 404,
+        "seconds": 0.18
+      }
+    ],
+    "burst": [
+      {
+        "status": 429,
+        "seconds": 0.29
+      },
+      {
+        "status": 429,
+        "seconds": 0.29
+      },
+      {
+        "status": 200,
+        "seconds": 2.74
+      },
+      {
+        "status": 429,
+        "seconds": 0.24
+      },
+      {
+        "status": 200,
+        "seconds": 2.73
+      },
+      {
+        "status": 200,
+        "seconds": 2.73
+      },
+      {
+        "status": 429,
+        "seconds": 0.24
+      },
+      {
+        "status": 429,
+        "seconds": 0.36
+      },
+      {
+        "status": 200,
+        "seconds": 0.23
+      },
+      {
+        "status": 200,
+        "seconds": 0.19
+      },
+      {
+        "status": 200,
+        "seconds": 0.36
+      },
+      {
+        "status": 200,
+        "seconds": 0.34
+      }
+    ],
+    "recovery": [
+      {
+        "status": 200,
+        "seconds": 2.71
+      },
+      {
+        "status": 200,
+        "seconds": 3.14
+      }
+    ],
+    "features": [
+      {
+        "status": 200,
+        "seconds": 1.47
+      },
+      {
+        "status": 200,
+        "seconds": 1.57
+      }
+    ]
+  },
+  "vision_modes": [
+    {
+      "mode": "Quick scene labels",
+      "seconds": 2.32,
+      "returned_answer": true
+    },
+    {
+      "mode": "Scene scientist",
+      "seconds": 2.93,
+      "returned_answer": true
+    },
+    {
+      "mode": "Read and explain",
+      "seconds": 2.81,
+      "returned_answer": true
+    },
+    {
+      "mode": "Invent with objects",
+      "seconds": 2.61,
+      "returned_answer": true
+    },
+    {
+      "mode": "Robot planner",
+      "seconds": 2.69,
+      "returned_answer": true
+    }
+  ],
+  "browser_camera": "MacBook Air camera preview, snapshot labels, repeated live analysis and Stop camera verified via browser UI. Camera stopped after tests.",
+  "limitations": [
+    "Jetson physical camera not tested.",
+    "Image answers can misidentify fine hardware details; responses are not accuracy guarantees.",
+    "General search returned unavailable for one burst request; chat continued."
+  ],
+  "fixes": [
+    "Bound camera permission wait to 15 seconds and discard late streams.",
+    "Allow DEMO_URL override in portal checks."
+  ]
+}

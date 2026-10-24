@@ -1,7 +1,8 @@
 """Bounded functional/load check; uses at most 12 concurrent requests."""
+import os
 import base64, concurrent.futures, json, time, urllib.request, urllib.error
 from pathlib import Path
-URL='https://d117f15149291.notebooksn.jarvislabs.net'
+URL=os.environ.get('DEMO_URL', 'https://0825ec5455951.notebooksn.jarvislabs.net').rstrip('/')
 def call(path='/', body=None, headers=None):
     start=time.monotonic()
     data=None if body is None else json.dumps(body).encode()
