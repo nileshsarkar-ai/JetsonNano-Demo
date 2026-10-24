@@ -1,0 +1,107 @@
+{
+  "date": "2026-10-24",
+  "scope": "12 simultaneous requests: 8 chat + 4 page loads; malformed requests; recovery; language, vision and news checks. Not a sustained capacity benchmark.",
+  "results": {
+    "invalid": [
+      {
+        "status": 400,
+        "seconds": 0.55
+      },
+      {
+        "status": 400,
+        "seconds": 0.6
+      },
+      {
+        "status": 400,
+        "seconds": 0.65
+      },
+      {
+        "status": 400,
+        "seconds": 0.6
+      },
+      {
+        "status": 403,
+        "seconds": 0.55
+      },
+      {
+        "status": 404,
+        "seconds": 0.57
+      }
+    ],
+    "burst": [
+      {
+        "status": 429,
+        "seconds": 0.27
+      },
+      {
+        "status": 429,
+        "seconds": 0.27
+      },
+      {
+        "status": 200,
+        "seconds": 3.42
+      },
+      {
+        "status": 429,
+        "seconds": 0.26
+      },
+      {
+        "status": 200,
+        "seconds": 3.42
+      },
+      {
+        "status": 200,
+        "seconds": 3.41
+      },
+      {
+        "status": 429,
+        "seconds": 0.25
+      },
+      {
+        "status": 429,
+        "seconds": 0.24
+      },
+      {
+        "status": 200,
+        "seconds": 0.29
+      },
+      {
+        "status": 200,
+        "seconds": 0.24
+      },
+      {
+        "status": 200,
+        "seconds": 0.24
+      },
+      {
+        "status": 200,
+        "seconds": 0.27
+      }
+    ],
+    "recovery": [
+      {
+        "status": 200,
+        "seconds": 2.73
+      },
+      {
+        "status": 200,
+        "seconds": 2.89
+      }
+    ],
+    "features": [
+      {
+        "status": 200,
+        "seconds": 1.05
+      },
+      {
+        "status": 200,
+        "seconds": 1.13
+      }
+    ]
+  },
+  "ui": [
+    "Top-level Chat, Voice, Vision tabs verified.",
+    "Message draft preserved between Chat and Voice."
+  ],
+  "voice_limit": "Microphone permission previously denied; no new successful transcription claimed."
+}

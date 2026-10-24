@@ -33,3 +33,9 @@ Verified public page HTTP 200, date response (Saturday, 24 October 2026), and ne
 Voice input uses browser SpeechRecognition where available; it requests microphone permission, writes a transcript into the message box, and requires Send before submitting. Select English, Hindi or Kannada for recognition/playback. Recognition depends on the browser's speech service; Chromium builds may expose the API without a working service. Spoken replies use installed browser/system voices; missing languages show an explicit message instead of using the wrong voice. Stop voice cancels recording/playback; hiding the tab stops them too. Auto-speak is opt-in. Browser speech services may process audio remotely.
 
 Public test recordings from Wikimedia Commons are embedded with author/license attribution and linked source pages. They test playback; microphone recognition of speaker playback can be suppressed by echo cancellation. They are not a recognition accuracy benchmark. Run `node serving/nano-chat/checks/check_voice.cjs` from the repository root for mocked control-flow tests.
+
+## Navigation and stress recheck — 24 October 2026
+
+Top-level Chat, Voice and Vision tabs separate controls. Chat and Voice share conversation history and draft input; leaving Voice stops speech/microphone activity, and leaving Vision stops camera/live analysis. Arrow keys, Home and End navigate tabs. Browser checks verified tab visibility, preserved drafts, and no attached camera after switching away during a permission request.
+
+The repeated bounded stress check passed: 3 chat requests completed in ~3.4 seconds; 5 excess requests returned 429; 4 concurrent page loads completed in 0.24–0.29 seconds. Invalid requests, post-burst language responses, image analysis and sourced news passed. Evidence: checks/navigation-stress-2026-10-24.json. This is not a sustained load guarantee or proof of microphone transcription.

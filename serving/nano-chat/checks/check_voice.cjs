@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const html=fs.readFileSync('serving/nano-chat/index.html','utf8');
-const source=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].at(-1)[1];
+const source=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].find(m=>m[1].includes('const voiceStatus='))[1];
 const elements={};function element(id){return elements[id]??={value:'en-IN',textContent:'',disabled:false,options:[{text:'English'}],selectedIndex:0};}
 let spoken,aborted=false;
 class Recognition{start(){this.onstart()}abort(){aborted=true;this.onend?.()}}
