@@ -27,3 +27,9 @@ Previous instance 514929 was no longer present. Restored repository revision 585
 Portal: https://0825ec5455951.notebooksn.jarvislabs.net/
 
 Verified public page HTTP 200, date response (Saturday, 24 October 2026), and news response with source links. Physical camera capture was not retested. Instance left running as requested; compute rate at restoration ₹38.88/hour plus storage and API usage. Configuration secret stays in `/home/nano-demo/access.json`, excluded from Git.
+
+## Voice companion
+
+Voice input uses browser SpeechRecognition where available; it requests microphone permission, writes a transcript into the message box, and requires Send before submitting. Select English, Hindi or Kannada for recognition/playback. Recognition depends on the browser's speech service; Chromium builds may expose the API without a working service. Spoken replies use installed browser/system voices; missing languages show an explicit message instead of using the wrong voice. Stop voice cancels recording/playback; hiding the tab stops them too. Auto-speak is opt-in. Browser speech services may process audio remotely.
+
+Public test recordings from Wikimedia Commons are embedded with author/license attribution and linked source pages. They test playback; microphone recognition of speaker playback can be suppressed by echo cancellation. They are not a recognition accuracy benchmark. Run `node serving/nano-chat/checks/check_voice.cjs` from the repository root for mocked control-flow tests.
