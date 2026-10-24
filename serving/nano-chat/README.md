@@ -49,3 +49,7 @@ This is a public, video-only snapshot stream (up to roughly 3 frames/second, net
 Verified 24 October 2026: real MacBook camera to a second browser session, automatic joining and chat relay; publish/stop, exclusive publisher, invalid-token/frame rejection, and feed clearing checks passed.
 
 Tab activation: Chat focuses the composer; Voice requests speech recognition using the browser/system default input; Vision automatically joins an active broadcast or opens a local camera and starts live scene labels. W100 is preferred when the browser exposes its device label. Leaving Vision stops analysis while an explicitly started broadcast continues. Leaving Voice stops listening. Stop controls remain available. macOS Sound → Input was verified as MacBook Air Microphone; the in-app browser still reports microphone permission denied, so actual speech recognition requires browser permission.
+
+### Person and object boxes
+
+Vision uses bundled TensorFlow.js 4.22.0 and COCO-SSD 2.2.3 (lite MobileNet v2) for browser-side bounding boxes, with a 0.50 person threshold and 0.60 other-object threshold. Green boxes identify detected people; blue boxes identify recognized objects. Boxes update one inference at a time and may lag or miss objects. Scene descriptions remain a separate feature. Assets and model weights are served locally by the portal; licenses are included under assets. The TFJS bundle has one compatibility patch replacing the regenerator global-assignment Function constructor with a direct globalThis assignment so CSP does not require unsafe-eval.

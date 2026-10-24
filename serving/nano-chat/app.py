@@ -7,6 +7,7 @@ import re
 import threading
 import time
 import secrets
+import mimetypes
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -34,11 +35,16 @@ class Handler(BaseHTTPRequestHandler):
         if status == 429: self.send_header('Retry-After', '3')
         self.send_header('Cache-Control', 'no-store')
         self.send_header('X-Content-Type-Options', 'nosniff')
-        self.send_header('Content-Security-Policy', "default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; media-src 'self' blob: https://upload.wikimedia.org; img-src 'self' data:; frame-ancestors 'none'")
+        self.send_header('Content-Security-Policy', "default-src 'self'; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'; media-src 'self' blob: https://upload.wikimedia.org; img-src 'self' data:; frame-ancestors 'none'")
         self.end_headers()
         self.wfile.write(body)
 
     def do_GET(self):
+        if self.path.startswith('/assets/'):
+            root = Path(__file__).with_name('assets').resolve()
+            asset = (root / self.path.split('?', 1)[0][8:]).resolve()
+            if root not in asset.parents or not asset.is_file(): return self.reply(404, b'{}')
+            return self.reply(200, asset.read_bytes(), mimetypes.guess_type(str(asset))[0] or 'application/octet-stream')
         if self.path.split('?')[0] == '/broadcast':
             with BROADCAST_LOCK:
                 active = time.monotonic() - BROADCAST['updated'] < 8
