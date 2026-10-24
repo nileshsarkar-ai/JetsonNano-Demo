@@ -57,3 +57,9 @@ Vision uses bundled TensorFlow.js 4.22.0 and COCO-SSD 2.2.3 (lite MobileNet v2) 
 Stability update: detection runs on the CPU inside a dedicated Web Worker at 320px input, one request at a time with a 15-second watchdog and 1-second gap. Scene descriptions use a 4-second gap. The earlier main-page WebGL loop was replaced after reported page crashes. Local checks observed approximately 1.9–2.4 seconds per detector pass; this is not full-frame-rate tracking.
 
 Remote box relay: the broadcaster composites the source detector's boxes into each shared JPEG, correcting for preview letterboxing. Remote viewers receive those boxes directly and do not load or run TensorFlow. Detection workers now start only when a local camera opens. Reload existing viewers to stop the older per-viewer detector.
+
+### Persistent Mac voice (prepared)
+
+The microphone uses MediaRecorder and server-side faster-whisper rather than browser SpeechRecognition. With microphone permission, it listens for “hello” in short audio segments, then records a 10-second question, submits it, waits for the reply and returns to waiting for “hello”. The header Stop microphone control ends capture; tab switching does not. Raw clips are transcribed in temporary files and removed. Wake listening sends audio segments to the server too. Source chat messages/replies are mirrored to remote viewers while the camera broadcast is active.
+
+24 October verification: syntax checks passed; speech model installed and downloaded. macOS ChatGPT microphone permission was switched on, but macOS requires an app restart. Restart was deferred to preserve the active W100 broadcast. Actual microphone capture and wake-word end-to-end behavior remain unverified. Current server still has the earlier five-second recording version; restart/deploy the prepared files only when the camera interruption is acceptable.

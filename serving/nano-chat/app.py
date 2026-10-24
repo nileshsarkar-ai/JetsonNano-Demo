@@ -8,6 +8,7 @@ import threading
 import time
 import secrets
 import mimetypes
+import tempfile
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -19,6 +20,8 @@ from pathlib import Path
 CONFIG = json.loads(Path(os.environ.get('DEMO_CONFIG', '/home/nano-demo/access.json')).read_text())
 PAGE = Path(__file__).with_name('index.html').read_bytes()
 SLOTS = threading.BoundedSemaphore(3)
+SPEECH_SLOT = threading.Lock()
+SPEECH_MODEL = None
 
 BROADCAST = {'token': None, 'frame': '', 'messages': [], 'updated': 0}
 BROADCAST_LOCK = threading.Lock()
@@ -54,10 +57,36 @@ class Handler(BaseHTTPRequestHandler):
         self.reply(200, PAGE, 'text/html; charset=utf-8')
 
     def do_POST(self):
-        if self.path not in ('/chat', '/vision', '/broadcast'): return self.reply(404, b'{}')
+        if self.path not in ('/chat', '/vision', '/broadcast', '/transcribe'): return self.reply(404, b'{}')
         origin = self.headers.get('Origin')
         if origin and origin != 'https://' + self.headers.get('Host', ''):
             return self.reply(403, b'{}')
+        if self.path == '/transcribe':
+            global SPEECH_MODEL
+            if not SPEECH_SLOT.acquire(False): return self.reply(429, b'{"error":"Speech busy; retry shortly."}')
+            try:
+                size = int(self.headers.get('Content-Length', '0'))
+                if not 0 < size <= 4000000: raise ValueError()
+                body = json.loads(self.rfile.read(size))
+                audio = base64.b64decode(body['audio'], validate=True)
+                if not 0 < len(audio) <= 2800000: raise ValueError()
+                language = body.get('language', 'en')
+                if language not in ('en', 'hi', 'kn'): raise ValueError()
+                if SPEECH_MODEL is None:
+                    from faster_whisper import WhisperModel
+                    SPEECH_MODEL = WhisperModel('tiny', device='cpu', compute_type='int8', cpu_threads=4, download_root='/home/nano-demo/models')
+                with tempfile.NamedTemporaryFile(suffix='.audio') as f:
+                    f.write(audio); f.flush()
+                    segments, info = SPEECH_MODEL.transcribe(f.name, language=language, beam_size=1, vad_filter=True, condition_on_previous_text=False, clip_timestamps='0,12')
+                    transcript = ' '.join(seg.text.strip() for seg in segments if seg.no_speech_prob < .6).strip()
+                return self.reply(200, json.dumps({'text':transcript}).encode())
+            except (ValueError, TypeError, KeyError, binascii.Error):
+                return self.reply(400, b'{"error":"Invalid audio recording."}')
+            except Exception as error:
+                print('Speech failed:', type(error).__name__, flush=True)
+                return self.reply(502, b'{"error":"Could not transcribe. Please try again."}')
+            finally:
+                SPEECH_SLOT.release()
         if self.path == '/broadcast':
             try:
                 size = int(self.headers.get('Content-Length', '0'))
